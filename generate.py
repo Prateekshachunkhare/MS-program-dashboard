@@ -177,6 +177,12 @@ HTML_TEMPLATE = """\
   .chart-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
   .chart-card h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:14px}
   .chart-wrap canvas{max-height:210px}
+  .release-summary-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:10px}
+  .release-summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+  .rel-card-sm{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;text-align:center}
+  .rel-card-sm .big{font-size:26px;font-weight:900;line-height:1}
+  .rel-card-sm .sm{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+  .section-divider{border:none;border-top:1px solid var(--border);margin:0 0 18px}
   .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:12px}
   .owner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px;margin-bottom:26px}
   .owner-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;position:relative;transition:box-shadow .18s,border-color .18s,transform .18s;user-select:none}
@@ -271,14 +277,21 @@ HTML_TEMPLATE = """\
     </div>
     <a class="ext-link" href="SHEET_URL_PLACEHOLDER" target="_blank">&#8599; Open RAID Log</a>
   </div>
+  <div class="release-summary-label">&#128197; Release Calendar</div>
+  <div class="release-summary-row">
+    <div class="rel-card-sm"><div class="big" style="color:#4f46e5">3</div><div class="sm">Active Tracks</div></div>
+    <div class="rel-card-sm"><div class="big" style="color:#10b981">May 11</div><div class="sm">MS Convergence Go-Live</div></div>
+    <div class="rel-card-sm"><div class="big" style="color:#f59e0b">Jun 12</div><div class="sm">Change Orders Ph2 Launch</div></div>
+  </div>
+  <hr class="section-divider">
+  <div class="release-summary-label">&#128203; RAID Log</div>
   <div class="summary-row">
     <div class="summary-card"><div class="val val-brand">TOTAL_ITEMS_PLACEHOLDER</div><div class="lbl">Total Open Items</div></div>
     <div class="summary-card"><div class="val val-green">NUM_OWNERS_PLACEHOLDER</div><div class="lbl">Owners Tracked</div></div>
     <div class="summary-card"><div class="val val-red">TOTAL_OVERDUE_PLACEHOLDER</div><div class="lbl">Overdue Items</div></div>
   </div>
-  <div class="charts-row">
-    <div class="chart-card"><h3>Items by Owner</h3><div class="chart-wrap"><canvas id="donutChart"></canvas></div></div>
-    <div class="chart-card"><h3>On-Track vs Overdue</h3><div class="chart-wrap"><canvas id="pieChart"></canvas></div></div>
+  <div class="chart-card" style="margin-bottom:26px;max-width:520px">
+    <h3>Items by Owner</h3><div class="chart-wrap"><canvas id="donutChart"></canvas></div>
   </div>
   <div class="section-title">Owner Breakdown &mdash; click a card to drill down</div>
   <div class="owner-grid" id="ownerGrid"></div>
@@ -338,19 +351,15 @@ function showTab(id){
   event.currentTarget.classList.add('active');
 }
  
-const SS_BASE='https://app.smartsheet.com/sheets/3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1';
+const SHEET_URL='SHEET_URL_PLACEHOLDER';
 const PALETTE=['#4f46e5','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#be185d','#6366f1','#0e7490','#7e22ce','#b45309'];
 const owners=OWNERS_JSON_PLACEHOLDER;
  
 function initials(n){return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
-function ssLink(id){return SS_BASE+'?rowId='+id;}
  
 (function(){
   const dc=document.getElementById('donutChart').getContext('2d');
   new Chart(dc,{type:'doughnut',data:{labels:owners.map(o=>o.name.split(' ')[0]),datasets:[{data:owners.map(o=>o.total),backgroundColor:PALETTE,borderColor:'#fff',borderWidth:3,hoverOffset:8}]},options:{cutout:'62%',plugins:{legend:{position:'right',labels:{font:{size:11},color:'#374151',boxWidth:12,padding:10}},tooltip:{callbacks:{label:c=>' '+c.label+': '+c.parsed+' items'}}}}});
-  const pc=document.getElementById('pieChart').getContext('2d');
-  const od=owners.reduce((s,o)=>s+o.overdue,0),tot=owners.reduce((s,o)=>s+o.total,0);
-  new Chart(pc,{type:'pie',data:{labels:['On Track','Overdue'],datasets:[{data:[tot-od,od],backgroundColor:['#10b981','#ef4444'],borderColor:'#fff',borderWidth:4,hoverOffset:8}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:12},color:'#374151',boxWidth:14,padding:14}},tooltip:{callbacks:{label:c=>' '+c.label+': '+c.parsed+' items'}}}}});
 })();
  
 let activeIdx=null;
@@ -383,16 +392,13 @@ function toggleOwner(idx){
   const av=document.getElementById('detailAvatar');av.textContent=initials(o.name);av.style.background=PALETTE[idx%PALETTE.length];
   document.getElementById('detailName').textContent=o.name;
   document.getElementById('detailCount').textContent=o.total+' action item'+(o.total!==1?'s':'')+(o.overdue>0?'  \u00b7  '+o.overdue+' overdue':'');
-  const hasLinks=o.items.some(i=>i.rowId);
-  document.getElementById('linkHint').style.display=hasLinks?'flex':'none';
+  document.getElementById('linkHint').style.display='flex';
   const list=document.getElementById('detailList');list.innerHTML='';
   o.items.forEach((item,n)=>{
     const li=document.createElement('li');
     const numDiv='<div class="item-num '+(item.od?'od':'')+'">'+( n+1)+'</div>';
     const badge=item.od?'<span class="overdue-badge">&#9888; OVERDUE</span>':'';
-    const content=item.rowId
-      ?'<span><a class="item-link" href="'+ssLink(item.rowId)+'" target="_blank">'+item.t+'<span class="ss-icon">&#8599;</span></a>'+badge+'</span>'
-      :'<span>'+item.t+badge+'</span>';
+    const content='<span><a class="item-link" href="'+SHEET_URL+'" target="_blank">'+item.t+'<span class="ss-icon">&#8599;</span></a>'+badge+'</span>';
     li.innerHTML=numDiv+content;
     list.appendChild(li);
   });
