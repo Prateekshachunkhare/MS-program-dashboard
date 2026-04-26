@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Raid Log Owner Dashboard",
+  "schemaVersion": 1,
+  "description": "Interactive RAID log action item dashboard for the Targeted Offer program. Shows per-owner item counts, overdue flags, and a clickable drill-down listing all action items per owner. Data sourced from the Marketing Studio/Targeted Offer RAID Log in Smartsheet (sheet ID 980305451110276) as of April 25, 2026."
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAID Log · Action Item Dashboard</title>
+<style>
+  :root { color-scheme: light; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f6fa;
+    color: #1a1d23;
+    min-height: 100vh;
+    padding: 24px 20px;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .page-header h1 { font-size: 20px; font-weight: 700; color: #1a1d23; }
+  .page-header .sub { font-size: 13px; color: #6b7280; margin-top: 3px; }
+  .sheet-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500;
+    color: #2563eb; text-decoration: none;
+    border: 1px solid #bfdbfe; border-radius: 6px;
+    padding: 6px 12px; background: #eff6ff;
+    white-space: nowrap;
+  }
+  .sheet-link:hover { background: #dbeafe; }
+
+  /* ── Summary cards ── */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .summary-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .summary-card .val { font-size: 34px; font-weight: 800; line-height: 1; }
+  .summary-card .lbl { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 5px; }
+  .val-blue  { color: #2563eb; }
+  .val-green { color: #059669; }
+  .val-red   { color: #dc2626; }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #9ca3af; margin-bottom: 12px;
+  }
+
+  /* ── Owner grid ── */
+  .owner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .owner-card {
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    position: relative;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+  .owner-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #93c5fd; }
+  .owner-card.active { border-color: #2563eb; box-shadow: 0 0 0 3px #bfdbfe; }
+  .owner-card.has-overdue { border-left: 4px solid #dc2626; }
+  .owner-card.no-overdue { border-left: 4px solid #10b981; }
+
+  .owner-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .owner-name { font-size: 14px; font-weight: 600; color: #1a1d23; }
+  .chevron { font-size: 10px; color: #9ca3af; transition: transform 0.2s; }
+  .owner-card.active .chevron { transform: rotate(180deg); }
+
+  .owner-stats { display: flex; gap: 8px; }
+  .stat-box {
+    flex: 1; text-align: center;
+    background: #f9fafb; border-radius: 7px;
+    padding: 7px 4px;
+  }
+  .stat-box .num { font-size: 20px; font-weight: 800; line-height: 1; }
+  .stat-box .lbl { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .num-blue { color: #2563eb; }
+  .num-red  { color: #dc2626; }
+
+  .risk-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 9px;
+    font-size: 10px; font-weight: 600;
+    color: #dc2626; background: #fef2f2;
+    border: 1px solid #fecaca; border-radius: 5px;
+    padding: 2px 7px; width: 100%;
+  }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    display: none;
+    background: #fff;
+    border: 1.5px solid #2563eb;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 28px;
+    animation: fadeIn 0.18s ease;
+  }
+  .detail-panel.visible { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform:none; } }
+
+  .detail-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .detail-header h2 { font-size: 16px; font-weight: 700; color: #1a1d23; }
+  .close-btn {
+    font-size: 18px; line-height: 1; cursor: pointer;
+    color: #9ca3af; border: none; background: none; padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .close-btn:hover { background: #f3f4f6; color: #374151; }
+
+  .item-list { list-style: none; }
+  .item-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 13px; color: #374151; line-height: 1.45;
+  }
+  .item-list li:last-child { border-bottom: none; }
+  .item-num {
+    flex-shrink: 0;
+    min-width: 22px; height: 22px;
+    background: #eff6ff; color: #2563eb;
+    border-radius: 5px; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .item-num.overdue-num {
+    background: #fef2f2; color: #dc2626;
+  }
+  .overdue-flag {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600;
+    color: #dc2626; background: #fef2f2;
+    border: 1px solid #fecaca; border-radius: 4px;
+    padding: 1px 5px; margin-left: 6px; vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* ── Footer ── */
+  .footer { font-size: 11px; color: #9ca3af; text-align: right; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>Targeted Offer Program · RAID Log Dashboard</h1>
+    <div class="sub">Action items by owner · As of April 25, 2026 · Click any owner card to see their items</div>
+  </div>
+  <a class="sheet-link" href="https://app.smartsheet.com/sheets/3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1?view=grid" target="_blank">
+    ↗ Open RAID Log in Smartsheet
+  </a>
+</div>
+
+<!-- Summary -->
+<div class="summary-row">
+  <div class="summary-card"><div class="val val-blue">38</div><div class="lbl">Total Log Items</div></div>
+  <div class="summary-card"><div class="val val-green">9</div><div class="lbl">Owners</div></div>
+  <div class="summary-card"><div class="val val-red">3</div><div class="lbl">Overdue (Risk)</div></div>
+</div>
+
+<!-- Owner Cards -->
+<div class="section-title">Owner Breakdown — click to drill down</div>
+<div class="owner-grid" id="ownerGrid"></div>
+
+<!-- Detail Panel -->
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <h2 id="detailName"></h2>
+    <button class="close-btn" onclick="closeDetail()">×</button>
+  </div>
+  <ul class="item-list" id="detailList"></ul>
+</div>
+
+<div class="footer">Data last synced Apr 25, 2026 · 3 items escalated to Risk · Slack reminders sent to all owners</div>
+
+<script>
+const owners = [
+  {
+    name: "Prateeksha Chunkhare",
+    total: 10, overdue: 0,
+    items: [
+      { text: "Add two ops debt line items to the Fallow deck (WebOps and homes/pricing ops)", overdue: false },
+      { text: "Create a risk log for Change Orders; work with Poon and Bharat to populate it", overdue: false },
+      { text: "Connect with Nisarg for context on Change Orders, then take over the Poon + Bharat workback planning meeting", overdue: false },
+      { text: "Add Shika to the Change Orders meeting to capture Maria's fast-follow requirements", overdue: false },
+      { text: "Confirm with Poon that the change order solution pre-read is sent out by Friday for Monday's product review", overdue: false },
+      { text: "Prepare status update for tomorrow's Fallow meeting covering Targeted Offer + Change Orders", overdue: false },
+      { text: "Review and consider long-term value and maintenance overhead of current UI/UX approach vs. agent-driven, draft-first workflow", overdue: false },
+      { text: "Complete plan to cover all permutations of attribute changes in the UI within the next 10 days of coding", overdue: false },
+      { text: "Review list of known issues from previous bulk edit implementations in Campaign Manager", overdue: false },
+      { text: "Create and share a refined mock/working version of the new widget/publishing experience in Marketing Studio", overdue: false },
+    ]
+  },
+  {
+    name: "Priyank Bansal",
+    total: 8, overdue: 0,
+    items: [
+      { text: "Follow up with Steve on Taxonomy workstream", overdue: false },
+      { text: "Forward Monday product review invite to Prateeksha and Nisarg", overdue: false },
+      { text: "Host 30-min MS Convergence demo", overdue: false },
+      { text: "Explore earlier UAT start if dev is done by 5/15", overdue: false },
+      { text: "Slack Ali the full list of 7 MCPs and their respective owners (Lalitha, Abirami, Gaurav Mishra, Pun, etc.)", overdue: false },
+      { text: "Clarify Pricing JSON status with Deepak Yadav at tomorrow's meeting", overdue: false },
+      { text: "Ask Rihanna to add Maria and Sujata to weekly Fallow meeting; expand meeting to 1 hour", overdue: false },
+      { text: "Conduct 30-minute review session with marketing operations team to ensure new system doesn't replicate existing bulk edit issues", overdue: false },
+    ]
+  },
+  {
+    name: "Bharatkumar",
+    total: 8, overdue: 0,
+    items: [
+      { text: "Share written doc on Change Orders versioning proposal", overdue: false },
+      { text: "Share user guide / PR FAQ with example prompts and suggestions for users during the testing phase", overdue: false },
+      { text: "Be available for follow-up calls with Neeraj (and others) to address further questions on UI/UX for bulk and content edits", overdue: false },
+      { text: "Revisit Targeted Offers items 3 & 4 post 30/60/90 milestones", overdue: false },
+      { text: "Partner with users to document end-to-end UAT scenarios in parallel with development; ensure all user experience permutations are covered", overdue: false },
+      { text: "Monitor and plan for future integration of bulk actions (clone, publish, delete) from the parallel track into the agentic workflow", overdue: false },
+      { text: "Share convergence document as pre-read to stakeholders; ensure it clearly explains what to expect and is aligned with PM sign-off", overdue: false },
+      { text: "Work with users to list all UAT scenarios and test cases (including prompt and use case permutations) for Change Orders", overdue: false },
+    ]
+  },
+  {
+    name: "Nisarg Trivedi",
+    total: 5, overdue: 1,
+    overdueDetail: "XD design spec follow-up",
+    items: [
+      { text: "Follow up with Gokul on XD design spec (due April 23, no response received)", overdue: true },
+      { text: "Check with Bharat/John whether Janice is aligned on the 5-day UAT timeline; flag as risk if not", overdue: false },
+      { text: "Attend daily convergence war room; find secondary working contact beyond Gaurav (suggest Rohit)", overdue: false },
+      { text: "Open a risk in Marvel: GTM Tech PM team not holding Health Dashboard team accountable; articulate clearly with Priyank's help", overdue: false },
+      { text: "Add Priyank to existing Slack thread with Deepak; message Deepak saying Priyank has asked to open a risk in Marvel unless response is received", overdue: false },
+    ]
+  },
+  {
+    name: "Ali Navvab-Safavi",
+    total: 3, overdue: 1,
+    overdueDetail: "SFDC delivery timeline → escalated to Risk",
+    items: [
+      { text: "Confirm RoW country mapping in SFDC Wholesale Offers", overdue: false },
+      { text: "Share SFDC Wholesale Offers delivery timeline (due Apr 23)", overdue: true },
+      { text: "Review IXP MCP work and create a WBS template; share with Poon and all 7 MCP owners with July 15 as target date", overdue: false },
+    ]
+  },
+  {
+    name: "Pon Murugesh",
+    total: 1, overdue: 0,
+    items: [
+      { text: "Develop UAT test cases for Change Orders", overdue: false },
+    ]
+  },
+  {
+    name: "Riana Katz",
+    total: 1, overdue: 1,
+    overdueDetail: "Insights Repository meeting → escalated to Risk",
+    items: [
+      { text: "Join Insights Repository meeting with Bharat (due Apr 23)", overdue: true },
+    ]
+  },
+  {
+    name: "Suramya Gupta",
+    total: 1, overdue: 0,
+    items: [
+      { text: "Set up call with Riana Katz on Mailchimp context ingestion testing", overdue: false },
+    ]
+  },
+  {
+    name: "Taylor Riley",
+    total: 1, overdue: 0,
+    items: [
+      { text: "Develop UAT test cases for Change Orders (co-owner with Pon Murugesh)", overdue: false },
+    ]
+  },
+];
+
+let activeIdx = null;
+
+function renderCards() {
+  const grid = document.getElementById('ownerGrid');
+  owners.forEach((o, i) => {
+    const card = document.createElement('div');
+    card.className = 'owner-card ' + (o.overdue > 0 ? 'has-overdue' : 'no-overdue');
+    card.id = 'card-' + i;
+    card.onclick = () => toggleOwner(i);
+    card.innerHTML = `
+      <div class="owner-top">
+        <div class="owner-name">${o.name}</div>
+        <span class="chevron" id="chevron-${i}">▼</span>
+      </div>
+      <div class="owner-stats">
+        <div class="stat-box">
+          <div class="num num-blue">${o.total}</div>
+          <div class="lbl">Items</div>
+        </div>
+        <div class="stat-box">
+          <div class="num ${o.overdue > 0 ? 'num-red' : 'num-blue'}">${o.overdue}</div>
+          <div class="lbl">Overdue</div>
+        </div>
+      </div>
+      ${o.overdue > 0 ? `<div class="risk-tag">⚠ ${o.overdueDetail}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function toggleOwner(idx) {
+  const panel = document.getElementById('detailPanel');
+  // If same card, close
+  if (activeIdx === idx) {
+    closeDetail();
+    return;
+  }
+  // Deactivate previous
+  if (activeIdx !== null) {
+    document.getElementById('card-' + activeIdx).classList.remove('active');
+  }
+  activeIdx = idx;
+  document.getElementById('card-' + idx).classList.add('active');
+
+  const o = owners[idx];
+  document.getElementById('detailName').textContent = o.name + '  ·  ' + o.total + ' action item' + (o.total !== 1 ? 's' : '');
+
+  const list = document.getElementById('detailList');
+  list.innerHTML = '';
+  o.items.forEach((item, n) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="item-num ${item.overdue ? 'overdue-num' : ''}">${n + 1}</div>
+      <span>${item.text}${item.overdue ? '<span class="overdue-flag">⚠ OVERDUE</span>' : ''}</span>
+    `;
+    list.appendChild(li);
+  });
+
+  panel.classList.add('visible');
+
+  // Scroll panel into view
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+}
+
+function closeDetail() {
+  if (activeIdx !== null) {
+    document.getElementById('card-' + activeIdx).classList.remove('active');
+    activeIdx = null;
+  }
+  document.getElementById('detailPanel').classList.remove('visible');
+}
+
+renderCards();
+</script>
+</body>
+</html>
