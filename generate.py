@@ -1,7 +1,4 @@
 
-
-Show in Folder
-
 #!/usr/bin/env python3
 """
 generate.py
