@@ -298,15 +298,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <body>
 
 <div class="tab-bar">
-  <button class="tab active" onclick="showTab('actions')">&#128203; Action Items</button>
+  <button class="tab active" onclick="showTab('main')">&#128202; MS Dashboard</button>
   <button class="tab" onclick="showTab('release')">&#128197; Release Calendar</button>
 </div>
 
-<!-- PAGE 1: ACTION ITEMS -->
-<div id="page-actions" class="page active">
+<!-- PAGE 1: MS DASHBOARD -->
+<div id="page-main" class="page active">
   <div class="page-header">
     <div class="header-left">
-      <h1>Marketing Studio &middot; Program Dashboard</h1>
+      <h1>Marketing Studio &middot; MS Dashboard</h1>
       <div class="sub">Targeted Offer Program &middot; RAID Log &middot; Auto-refreshed from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
     </div>
     <a class="ext-link" href="SHEET_URL_PLACEHOLDER" target="_blank">&#8599; Open RAID Log</a>
@@ -323,9 +323,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div><div class="rel-tile-val" style="color:#10b981">May 11</div><div class="rel-tile-lbl">MS Conv Go-Live</div></div>
     </div>
     <div class="rel-tile">
+      <div class="rel-tile-icon">&#127937;</div>
+      <div><div class="rel-tile-val" style="color:#059669">May 30</div><div class="rel-tile-lbl">CO Ph1 Launch</div></div>
+    </div>
+    <div class="rel-tile">
       <div class="rel-tile-icon">&#128640;</div>
       <div><div class="rel-tile-val" style="color:#f59e0b">Jun 12</div><div class="rel-tile-lbl">CO Ph2 Launch</div></div>
     </div>
+  </div>
+
+  <div class="rel-two-col">
+    <div class="chart-card">
+      <h3>Overall Milestone Status</h3>
+      <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+      <div class="status-legend">
+        <div class="s-chip s-done"><div class="s-chip-dot" style="background:#10b981"></div>Completed &middot; 1</div>
+        <div class="s-chip s-prog"><div class="s-chip-dot" style="background:#f59e0b"></div>In Progress &middot; 4</div>
+        <div class="s-chip s-ns"><div class="s-chip-dot" style="background:#6366f1"></div>Not Started &middot; 14</div>
+        <div class="s-chip s-block"><div class="s-chip-dot" style="background:#ef4444"></div>Blocked &middot; 1</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
+      <div id="projCards"></div>
+    </div>
+  </div>
+
+  <div class="proj-detail" id="projDetail">
+    <div class="proj-detail-header">
+      <div class="proj-detail-title" id="projDetailTitle"></div>
+      <button class="close-btn" onclick="closeProjDetail()">&#215;</button>
+    </div>
+    <ul class="milestone-list" id="projMilestoneList"></ul>
   </div>
 
   <hr class="section-divider">
@@ -377,31 +406,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="metric-strip-item"><div class="metric-strip-val" style="color:#f59e0b">4</div><div class="metric-strip-lbl">In Progress</div></div>
     <div class="metric-strip-item"><div class="metric-strip-val" style="color:#6366f1">14</div><div class="metric-strip-lbl">Not Started</div></div>
     <div class="metric-strip-item"><div class="metric-strip-val" style="color:#ef4444">1</div><div class="metric-strip-lbl">Blocked</div></div>
-  </div>
-
-  <div class="rel-two-col">
-    <div class="chart-card">
-      <h3>Overall Milestone Status</h3>
-      <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
-      <div class="status-legend">
-        <div class="s-chip s-done"><div class="s-chip-dot" style="background:#10b981"></div>Completed &middot; 1</div>
-        <div class="s-chip s-prog"><div class="s-chip-dot" style="background:#f59e0b"></div>In Progress &middot; 4</div>
-        <div class="s-chip s-ns"><div class="s-chip-dot" style="background:#6366f1"></div>Not Started &middot; 14</div>
-        <div class="s-chip s-block"><div class="s-chip-dot" style="background:#ef4444"></div>Blocked &middot; 1</div>
-      </div>
-    </div>
-    <div>
-      <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
-      <div id="projCards"></div>
-    </div>
-  </div>
-
-  <div class="proj-detail" id="projDetail">
-    <div class="proj-detail-header">
-      <div class="proj-detail-title" id="projDetailTitle"></div>
-      <button class="close-btn" onclick="closeProjDetail()">&#215;</button>
-    </div>
-    <ul class="milestone-list" id="projMilestoneList"></ul>
   </div>
 
   <div class="legend">
