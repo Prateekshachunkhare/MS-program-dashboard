@@ -15,8 +15,9 @@ SHEET_ID    = "980305451110276"
 TOKEN       = os.environ["SMARTSHEET_TOKEN"]
 TODAY       = date.today()
 LAST_SYNCED = TODAY.strftime("%B %d, %Y")
-SS_BASE     = f"https://app.smartsheet.com/sheets/{SHEET_ID}"
-SHEET_URL   = "https://app.smartsheet.com/sheets/3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1?view=grid"
+SS_ALPHA_ID = "3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1"   # alphanumeric ID used in browser URLs
+SS_BASE     = f"https://app.smartsheet.com/sheets/{SS_ALPHA_ID}"
+SHEET_URL   = f"{SS_BASE}?view=grid"
 BINDER_URL  = "https://docs.google.com/spreadsheets/d/1ThmYPfgTH_zhlmuJr63H47UzonJquO6QWHxkvXrP9tw/edit?gid=565365486#gid=565365486"
  
 # Row types to include in the dashboard
@@ -337,8 +338,7 @@ function showTab(id){
   event.currentTarget.classList.add('active');
 }
  
-const SHEET_ID='980305451110276';
-const SS_BASE='https://app.smartsheet.com/sheets/'+SHEET_ID;
+const SS_BASE='https://app.smartsheet.com/sheets/3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1';
 const PALETTE=['#4f46e5','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#be185d','#6366f1','#0e7490','#7e22ce','#b45309'];
 const owners=OWNERS_JSON_PLACEHOLDER;
  
@@ -518,3 +518,4 @@ if __name__ == "__main__":
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("Written → index.html")
+ 
