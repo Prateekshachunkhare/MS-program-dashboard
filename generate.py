@@ -1,16 +1,15 @@
-
 #!/usr/bin/env python3
 """
 generate.py
 Fetches open Action Items and Risks from the Marketing Studio / Targeted Offer RAID Log
 (Smartsheet sheet ID 980305451110276) and regenerates index.html for GitHub Pages.
- 
+
 Required env var:  SMARTSHEET_TOKEN  (a Smartsheet personal access token)
 """
- 
+
 import os, json, requests
 from datetime import date
- 
+
 # ─── Config ───────────────────────────────────────────────────────────────────
 SHEET_ID    = "980305451110276"
 TOKEN       = os.environ["SMARTSHEET_TOKEN"]
@@ -20,9 +19,9 @@ SS_ALPHA_ID = "3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1"
 SS_BASE     = f"https://app.smartsheet.com/sheets/{SS_ALPHA_ID}"
 SHEET_URL   = f"{SS_BASE}?view=grid"
 BINDER_URL  = "https://docs.google.com/spreadsheets/d/1ThmYPfgTH_zhlmuJr63H47UzonJquO6QWHxkvXrP9tw/edit?gid=565365486#gid=565365486"
- 
+
 INCLUDE_TYPES = {"Action Item", "Risk"}
- 
+
 # ─── Fetch sheet ──────────────────────────────────────────────────────────────
 def fetch_sheet():
     headers = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/json"}
@@ -34,7 +33,7 @@ def fetch_sheet():
     )
     r.raise_for_status()
     return r.json()
- 
+
 # ─── Safe cell value extraction ───────────────────────────────────────────────
 def cell_text(cell):
     if not cell:
@@ -45,35 +44,35 @@ def cell_text(cell):
         if name:
             return name.strip()
     return str(cell.get("displayValue") or cell.get("value") or "").strip()
- 
+
 # ─── Parse owners ─────────────────────────────────────────────────────────────
 def parse_owners(sheet):
     col = {}
     for c in sheet.get("columns", []):
         col[c["title"].strip()] = c["id"]
- 
+
     type_col   = col.get("Type")
     action_col = col.get("Action Item")
     owner_col  = col.get("Owner")
     status_col = col.get("Status")
     due_col    = col.get("Est. Completion")
- 
+
     print(f"  Column IDs found: Type={type_col}, Action Item={action_col}, "
           f"Owner={owner_col}, Status={status_col}, Due={due_col}")
- 
+
     owners_dict = {}
     skipped = 0
- 
+
     for row in sheet.get("rows", []):
         cells = {}
         for cell in row.get("cells", []):
             cells[cell.get("columnId")] = cell
- 
+
         type_val   = cell_text(cells.get(type_col))
         action_txt = cell_text(cells.get(action_col))
         owner_name = cell_text(cells.get(owner_col)) or "Unassigned"
         status_val = cell_text(cells.get(status_col))
- 
+
         if type_val not in INCLUDE_TYPES:
             skipped += 1
             continue
@@ -83,7 +82,7 @@ def parse_owners(sheet):
         if not action_txt:
             skipped += 1
             continue
- 
+
         is_overdue    = False
         overdue_label = ""
         due_cell      = cells.get(due_col)
@@ -97,21 +96,21 @@ def parse_owners(sheet):
                         overdue_label = f"Due {due_date.strftime('%b %-d')} passed"
                 except Exception:
                     pass
- 
+
         row_id = str(row["id"])
         if owner_name not in owners_dict:
             owners_dict[owner_name] = {"items": [], "first_overdue": None}
- 
+
         item = {"t": action_txt, "rowId": row_id}
         if is_overdue:
             item["od"] = True
             if owners_dict[owner_name]["first_overdue"] is None:
                 owners_dict[owner_name]["first_overdue"] = overdue_label
- 
+
         owners_dict[owner_name]["items"].append(item)
- 
+
     print(f"  Parsed {len(owners_dict)} owners, skipped {skipped} rows")
- 
+
     result = []
     for name, data in sorted(owners_dict.items(), key=lambda x: len(x[1]["items"]), reverse=True):
         items         = data["items"]
@@ -123,12 +122,12 @@ def parse_owners(sheet):
             "overdueDetail": data["first_overdue"] or "",
             "items":        items,
         })
- 
+
     for o in result:
         print(f"    {o['name']}: {o['total']} items, {o['overdue']} overdue")
- 
+
     return result
- 
+
 # ─── HTML template ────────────────────────────────────────────────────────────
 HTML_TEMPLATE = """\
 <!DOCTYPE html>
@@ -291,12 +290,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </style>
 </head>
 <body>
- 
+
 <div class="tab-bar">
   <button class="tab active" onclick="showTab('actions')">&#128203; Action Items</button>
   <button class="tab" onclick="showTab('release')">&#128197; Release Calendar</button>
 </div>
- 
+
 <!-- PAGE 1: ACTION ITEMS -->
 <div id="page-actions" class="page active">
   <div class="page-header">
@@ -306,7 +305,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <a class="ext-link" href="SHEET_URL_PLACEHOLDER" target="_blank">&#8599; Open RAID Log</a>
   </div>
- 
+
   <div class="section-label">&#128197; Release Calendar</div>
   <div class="rel-tiles">
     <div class="rel-tile">
@@ -322,24 +321,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div><div class="rel-tile-val" style="color:#f59e0b">Jun 12</div><div class="rel-tile-lbl">CO Ph2 Launch</div></div>
     </div>
   </div>
- 
+
   <hr class="section-divider">
- 
+
   <div class="section-label">&#128203; RAID Log</div>
   <div class="summary-row">
     <div class="summary-card"><div class="val val-brand">TOTAL_ITEMS_PLACEHOLDER</div><div class="lbl">Open Items</div></div>
     <div class="summary-card"><div class="val val-green">NUM_OWNERS_PLACEHOLDER</div><div class="lbl">Owners</div></div>
     <div class="summary-card"><div class="val val-red">TOTAL_OVERDUE_PLACEHOLDER</div><div class="lbl">Overdue</div></div>
   </div>
- 
+
   <div class="chart-card" style="max-width:520px;margin-bottom:24px">
     <h3>Items by Owner</h3>
     <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
   </div>
- 
+
   <div class="section-title">Owner Breakdown &mdash; click a card to drill down</div>
   <div class="owner-grid" id="ownerGrid"></div>
- 
+
   <div class="detail-panel" id="detailPanel">
     <div class="detail-header">
       <div class="detail-title">
@@ -351,10 +350,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="link-hint">&#128279; Click any item to open the RAID Log in Smartsheet</div>
     <ul class="item-list" id="detailList"></ul>
   </div>
- 
+
   <div class="footer">Auto-refreshed from Smartsheet &middot; Last sync: LAST_SYNCED_PLACEHOLDER</div>
 </div>
- 
+
 <!-- PAGE 2: RELEASE CALENDAR -->
 <div id="page-release" class="page">
   <div class="page-header">
@@ -364,7 +363,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <a class="ext-link" href="BINDER_URL_PLACEHOLDER" target="_blank">&#8599; Program Binder</a>
   </div>
- 
+
   <div class="metric-strip">
     <div class="metric-strip-item"><div class="metric-strip-val" style="color:#4f46e5">3</div><div class="metric-strip-lbl">Active Tracks</div></div>
     <div class="metric-strip-item"><div class="metric-strip-val" style="color:#374151">20</div><div class="metric-strip-lbl">Milestones</div></div>
@@ -373,7 +372,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="metric-strip-item"><div class="metric-strip-val" style="color:#6366f1">14</div><div class="metric-strip-lbl">Not Started</div></div>
     <div class="metric-strip-item"><div class="metric-strip-val" style="color:#ef4444">1</div><div class="metric-strip-lbl">Blocked</div></div>
   </div>
- 
+
   <div class="rel-two-col">
     <div class="chart-card">
       <h3>Overall Milestone Status</h3>
@@ -390,7 +389,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div id="projCards"></div>
     </div>
   </div>
- 
+
   <div class="proj-detail" id="projDetail">
     <div class="proj-detail-header">
       <div class="proj-detail-title" id="projDetailTitle"></div>
@@ -398,7 +397,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <ul class="milestone-list" id="projMilestoneList"></ul>
   </div>
- 
+
   <div class="legend">
     <div class="leg"><div class="leg-dot" style="background:linear-gradient(90deg,#059669,#34d399)"></div>Completed</div>
     <div class="leg"><div class="leg-dot" style="background:linear-gradient(90deg,#d97706,#fbbf24)"></div>In Progress</div>
@@ -410,7 +409,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <h3>Timeline &middot; April &ndash; June 2026</h3>
     <div id="ganttContainer"></div>
   </div>
- 
+
   <div class="section-title">Key Milestones</div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
     <table class="ms-table">
@@ -420,23 +419,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
   <div class="footer">Source: Marketing Studio Program Binder &middot; Last updated LAST_SYNCED_PLACEHOLDER</div>
 </div>
- 
+
 <script>
 const SHEET_URL = 'SHEET_URL_PLACEHOLDER';
- 
+
 function showTab(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   event.currentTarget.classList.add('active');
 }
- 
+
 /* ── ACTION ITEMS ── */
 const PALETTE = ['#4f46e5','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#be185d','#6366f1','#0e7490','#7e22ce','#b45309'];
 const owners = OWNERS_JSON_PLACEHOLDER;
- 
+
 function initials(n) { return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
- 
+
 (function() {
   const dc = document.getElementById('donutChart').getContext('2d');
   new Chart(dc, {
@@ -454,7 +453,7 @@ function initials(n) { return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUp
     }
   });
 })();
- 
+
 let activeOwnerIdx = null;
 (function() {
   const g = document.getElementById('ownerGrid');
@@ -475,7 +474,7 @@ let activeOwnerIdx = null;
     g.appendChild(c);
   });
 })();
- 
+
 function toggleOwner(idx) {
   const p = document.getElementById('detailPanel');
   if (activeOwnerIdx===idx) { closeDetail(); return; }
@@ -500,7 +499,7 @@ function closeDetail() {
   if (activeOwnerIdx!==null) document.getElementById('ocard-'+activeOwnerIdx).classList.remove('active');
   activeOwnerIdx = null; document.getElementById('detailPanel').classList.remove('visible');
 }
- 
+
 /* ── RELEASE CALENDAR ── */
 (function() {
   const sc = document.getElementById('statusChart').getContext('2d');
@@ -519,7 +518,7 @@ function closeDetail() {
     }
   });
 })();
- 
+
 const projects = [
   {
     id:'conv', name:'MS Convergence', dates:'Apr 3 \u2013 May 29, 2026',
@@ -563,10 +562,10 @@ const projects = [
     ]
   }
 ];
- 
+
 const statusLabels = {completed:'Done','in-progress':'In Progress','not-started':'Not Started',blocked:'Blocked'};
 const chipClass = {completed:'chip-done','in-progress':'chip-prog','not-started':'chip-ns',blocked:'chip-block'};
- 
+
 (function() {
   const g = document.getElementById('projCards');
   projects.forEach((proj, i) => {
@@ -600,7 +599,7 @@ const chipClass = {completed:'chip-done','in-progress':'chip-prog','not-started'
     g.appendChild(card);
   });
 })();
- 
+
 let activeProjIdx = null;
 function toggleProj(idx) {
   const panel = document.getElementById('projDetail');
@@ -627,7 +626,7 @@ function closeProjDetail() {
   if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
   activeProjIdx = null; document.getElementById('projDetail').classList.remove('visible');
 }
- 
+
 /* ── GANTT ── */
 const RS = new Date('2026-04-01'), RD = 90;
 function pct(d) { if(!d) return null; const diff=(new Date(d)-RS)/864e5; return Math.max(0,Math.min(100,diff/RD*100)); }
@@ -678,7 +677,7 @@ const ganttData = [
     rd.appendChild(lbl); rd.appendChild(trk); cont.appendChild(rd);
   });
 })();
- 
+
 const allMilestones = [
   {track:'MS Convergence',label:'Code Complete (P0/CM)',owner:'Gaurav Misra',start:'Apr 3',end:'Apr 17',status:'completed'},
   {track:'MS Convergence',label:'Code Complete (PPM/IXP)',owner:'Gaurav Misra',start:'Apr 3',end:'Apr 23',status:'in-progress'},
@@ -713,14 +712,14 @@ allMilestones.forEach(m => {
 </body>
 </html>
 """
- 
+
 # ─── HTML generation ──────────────────────────────────────────────────────────
 def generate_html(owners):
     total_items   = sum(o["total"]   for o in owners)
     total_overdue = sum(o["overdue"] for o in owners)
     num_owners    = len(owners)
     owners_json   = json.dumps(owners, ensure_ascii=False)
- 
+
     html = HTML_TEMPLATE
     html = html.replace("OWNERS_JSON_PLACEHOLDER",  owners_json)
     html = html.replace("LAST_SYNCED_PLACEHOLDER",  LAST_SYNCED)
@@ -730,19 +729,18 @@ def generate_html(owners):
     html = html.replace("SHEET_URL_PLACEHOLDER",    SHEET_URL)
     html = html.replace("BINDER_URL_PLACEHOLDER",   BINDER_URL)
     return html
- 
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     print("Fetching sheet from Smartsheet...")
     sheet = fetch_sheet()
     print(f"  Sheet: {sheet.get('name')}")
     print(f"  Total rows: {len(sheet.get('rows', []))}")
- 
+
     owners = parse_owners(sheet)
     print(f"Done. {len(owners)} owners, {sum(o['total'] for o in owners)} open items.")
- 
+
     html = generate_html(owners)
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("Written -> index.html")
- 
