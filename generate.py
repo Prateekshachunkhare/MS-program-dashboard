@@ -34,6 +34,11 @@ def fetch_sheet():
     r.raise_for_status()
     return r.json()
 
+# ─── Surrogate-safe string sanitizer ─────────────────────────────────────────
+def safe_str(text):
+    """Remove lone surrogate characters that can't be encoded as UTF-8."""
+    return text.encode("utf-8", errors="replace").decode("utf-8")
+
 # ─── Safe cell value extraction ───────────────────────────────────────────────
 def cell_text(cell):
     if not cell:
@@ -42,8 +47,9 @@ def cell_text(cell):
     if isinstance(obj, dict):
         name = obj.get("name") or obj.get("email") or ""
         if name:
-            return name.strip()
-    return str(cell.get("displayValue") or cell.get("value") or "").strip()
+            return safe_str(name.strip())
+    raw = str(cell.get("displayValue") or cell.get("value") or "").strip()
+    return safe_str(raw)
 
 # ─── Parse owners ─────────────────────────────────────────────────────────────
 def parse_owners(sheet):
@@ -531,7 +537,7 @@ const projects = [
       {label:'E2E Testing', owner:'Gaurav Misra', end:'Apr 30', status:'not-started'},
       {label:'Production Deployment', owner:'Gaurav Misra', end:'May 8', status:'not-started'},
       {label:'UAT (PM + MOps)', owner:'Bharatkumar', end:'May 8', status:'not-started'},
-      {label:'\ud83c\udfaf Go Live', owner:'Gaurav Misra', end:'May 11', status:'not-started'},
+      {label:'\U0001F3AF Go Live', owner:'Gaurav Misra', end:'May 11', status:'not-started'},
       {label:'Success Metrics', owner:'Bharatkumar', end:'May 29', status:'not-started'},
     ]
   },
@@ -544,7 +550,7 @@ const projects = [
       {label:'Code Complete', owner:'Kumaran / Abhay / Minal', end:'May 15', status:'in-progress'},
       {label:'Integration + E2E Testing', owner:'Abhay Kumar Singh', end:'May 22', status:'not-started'},
       {label:'UAT', owner:'Bharatkumar', end:'May 27', status:'not-started'},
-      {label:'\ud83c\udfaf Production Launch', owner:'Srinivas Kommu', end:'May 28', status:'not-started'},
+      {label:'\U0001F3AF Production Launch', owner:'Srinivas Kommu', end:'May 28', status:'not-started'},
       {label:'Post Launch Monitoring', owner:'Srinivas Kommu', end:'Jun 5', status:'not-started'},
     ]
   },
@@ -557,7 +563,7 @@ const projects = [
       {label:'Code Complete', owner:'NEERAJ GANG / Firdosh / Sunil', end:'May 15', status:'not-started'},
       {label:'E2E Testing', owner:'NEERAJ GANG', end:'May 29', status:'not-started'},
       {label:'UAT (PM + MOps)', owner:'Bharatkumar', end:'Jun 5', status:'not-started'},
-      {label:'\ud83c\udfaf Production Launch', owner:'NEERAJ GANG', end:'Jun 12', status:'not-started'},
+      {label:'\U0001F3AF Production Launch', owner:'NEERAJ GANG', end:'Jun 12', status:'not-started'},
       {label:'Post Launch + Metrics', owner:'Bharatkumar', end:'Jun 19', status:'not-started'},
     ]
   }
@@ -638,20 +644,20 @@ const ganttData = [
   {label:'MS Conv \u00b7 E2E Testing',track:'conv',status:'not-started',start:'2026-04-17',end:'2026-04-30'},
   {label:'MS Conv \u00b7 Prod Deploy',track:'conv',status:'not-started',start:'2026-05-01',end:'2026-05-08'},
   {label:'MS Conv \u00b7 UAT',track:'conv',status:'not-started',start:'2026-05-04',end:'2026-05-08'},
-  {label:'MS Conv \u00b7 Go Live \ud83c\udfaf',track:'conv',status:'not-started',start:'2026-05-08',end:'2026-05-11',key:true},
+  {label:'MS Conv \u00b7 Go Live \U0001F3AF',track:'conv',status:'not-started',start:'2026-05-08',end:'2026-05-11',key:true},
   {label:'MS Conv \u00b7 Post Launch',track:'conv',status:'not-started',start:'2026-05-11',end:'2026-05-29'},
   {label:'CO Ph1 \u00b7 Solution Design',track:'co1',status:'in-progress',start:'2026-04-20',end:'2026-04-27'},
   {label:'CO Ph1 \u00b7 Code Complete',track:'co1',status:'in-progress',start:'2026-04-22',end:'2026-05-15'},
   {label:'CO Ph1 \u00b7 Integration Test',track:'co1',status:'not-started',start:'2026-05-13',end:'2026-05-15'},
   {label:'CO Ph1 \u00b7 E2E Testing',track:'co1',status:'not-started',start:'2026-05-18',end:'2026-05-22'},
   {label:'CO Ph1 \u00b7 UAT',track:'co1',status:'not-started',start:'2026-05-25',end:'2026-05-27'},
-  {label:'CO Ph1 \u00b7 Launch \ud83c\udfaf',track:'co1',status:'not-started',start:'2026-05-28',end:'2026-05-29',key:true},
+  {label:'CO Ph1 \u00b7 Launch \U0001F3AF',track:'co1',status:'not-started',start:'2026-05-28',end:'2026-05-29',key:true},
   {label:'CO Ph1 \u00b7 Post Launch',track:'co1',status:'not-started',start:'2026-05-29',end:'2026-06-05'},
   {label:'CO Ph2 \u00b7 Solution Design',track:'co2',status:'in-progress',start:'2026-04-22',end:'2026-04-30'},
   {label:'CO Ph2 \u00b7 Code Complete',track:'co2',status:'not-started',start:'2026-05-05',end:'2026-05-15'},
   {label:'CO Ph2 \u00b7 E2E Testing',track:'co2',status:'not-started',start:'2026-05-18',end:'2026-05-29'},
   {label:'CO Ph2 \u00b7 UAT',track:'co2',status:'not-started',start:'2026-05-25',end:'2026-06-05'},
-  {label:'CO Ph2 \u00b7 Launch \ud83c\udfaf',track:'co2',status:'not-started',start:'2026-06-12',end:'2026-06-13',key:true},
+  {label:'CO Ph2 \u00b7 Launch \U0001F3AF',track:'co2',status:'not-started',start:'2026-06-12',end:'2026-06-13',key:true},
   {label:'CO Ph2 \u00b7 Post Launch',track:'co2',status:'not-started',start:'2026-06-15',end:'2026-06-19'},
 ];
 (function() {
@@ -685,19 +691,19 @@ const allMilestones = [
   {track:'MS Convergence',label:'E2E Testing',owner:'Gaurav Misra',start:'Apr 17',end:'Apr 30',status:'not-started'},
   {track:'MS Convergence',label:'Production Deployment',owner:'Gaurav Misra',start:'May 1',end:'May 8',status:'not-started'},
   {track:'MS Convergence',label:'UAT (PM + MOps)',owner:'Bharatkumar',start:'May 4',end:'May 8',status:'not-started'},
-  {track:'MS Convergence',label:'\ud83c\udfaf Go Live',owner:'Gaurav Misra',start:'May 8',end:'May 11',status:'not-started'},
+  {track:'MS Convergence',label:'\U0001F3AF Go Live',owner:'Gaurav Misra',start:'May 8',end:'May 11',status:'not-started'},
   {track:'MS Convergence',label:'Success Metrics',owner:'Bharatkumar',start:'May 11',end:'May 29',status:'not-started'},
   {track:'Change Orders Ph1',label:'Solution Design Sign-off',owner:'Srinivas Kommu',start:'Apr 20',end:'Apr 27',status:'in-progress'},
   {track:'Change Orders Ph1',label:'Code Complete',owner:'Kumaran / Abhay / Minal',start:'Apr 22',end:'May 15',status:'in-progress'},
   {track:'Change Orders Ph1',label:'Integration + E2E Testing',owner:'Abhay Kumar Singh',start:'May 13',end:'May 22',status:'not-started'},
   {track:'Change Orders Ph1',label:'UAT',owner:'Bharatkumar',start:'May 20',end:'May 27',status:'not-started'},
-  {track:'Change Orders Ph1',label:'\ud83c\udfaf Production Launch',owner:'Srinivas Kommu',start:'May 28',end:'May 28',status:'not-started'},
+  {track:'Change Orders Ph1',label:'\U0001F3AF Production Launch',owner:'Srinivas Kommu',start:'May 28',end:'May 28',status:'not-started'},
   {track:'Change Orders Ph1',label:'Post Launch Monitoring',owner:'Srinivas Kommu',start:'May 29',end:'Jun 5',status:'not-started'},
   {track:'Change Orders Ph2',label:'Solution Design Complete',owner:'NEERAJ GANG',start:'Apr 22',end:'Apr 30',status:'in-progress'},
   {track:'Change Orders Ph2',label:'Code Complete',owner:'NEERAJ GANG / Firdosh / Sunil',start:'May 5',end:'May 15',status:'not-started'},
   {track:'Change Orders Ph2',label:'E2E Testing',owner:'NEERAJ GANG',start:'May 18',end:'May 29',status:'not-started'},
   {track:'Change Orders Ph2',label:'UAT (PM + MOps)',owner:'Bharatkumar',start:'May 25',end:'Jun 5',status:'not-started'},
-  {track:'Change Orders Ph2',label:'\ud83c\udfaf Production Launch',owner:'NEERAJ GANG',start:'Jun 12',end:'Jun 12',status:'not-started'},
+  {track:'Change Orders Ph2',label:'\U0001F3AF Production Launch',owner:'NEERAJ GANG',start:'Jun 12',end:'Jun 12',status:'not-started'},
   {track:'Change Orders Ph2',label:'Post Launch + Metrics',owner:'Bharatkumar',start:'Jun 15',end:'Jun 19',status:'not-started'},
 ];
 const statusMap = {completed:'<span class="chip chip-done">\u2713 Done</span>','in-progress':'<span class="chip chip-prog">\u21bb In Progress</span>','not-started':'<span class="chip chip-ns">\u25cb Not Started</span>',blocked:'<span class="chip chip-block">\u2715 Blocked</span>'};
@@ -718,7 +724,7 @@ def generate_html(owners):
     total_items   = sum(o["total"]   for o in owners)
     total_overdue = sum(o["overdue"] for o in owners)
     num_owners    = len(owners)
-    owners_json   = json.dumps(owners, ensure_ascii=False)
+    owners_json   = json.dumps(owners, ensure_ascii=True)
 
     html = HTML_TEMPLATE
     html = html.replace("OWNERS_JSON_PLACEHOLDER",  owners_json)
