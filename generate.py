@@ -7,7 +7,7 @@ Fetches open Action Items and Risks from the Marketing Studio / Targeted Offer R
 Required env var:  SMARTSHEET_TOKEN  (a Smartsheet personal access token)
 """
 
-import os, json, requests
+import os, json, time, requests
 from datetime import date
 
 # ─── Config ───────────────────────────────────────────────────────────────────
@@ -22,17 +22,27 @@ BINDER_URL  = "https://docs.google.com/spreadsheets/d/1ThmYPfgTH_zhlmuJr63H47Uzo
 
 INCLUDE_TYPES = {"Action Item", "Risk"}
 
-# ─── Fetch sheet ──────────────────────────────────────────────────────────────
-def fetch_sheet():
+# ─── Fetch sheet (with retries for transient 5xx errors) ─────────────────────
+def fetch_sheet(retries=4, backoff=5):
     headers = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/json"}
-    r = requests.get(
-        f"https://api.smartsheet.com/2.0/sheets/{SHEET_ID}",
-        headers=headers,
-        params={"include": "objectValue"},
-        timeout=30
-    )
-    r.raise_for_status()
-    return r.json()
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.get(
+                f"https://api.smartsheet.com/2.0/sheets/{SHEET_ID}",
+                headers=headers,
+                params={"include": "objectValue"},
+                timeout=30
+            )
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status and status >= 500 and attempt < retries:
+                wait = backoff * attempt
+                print(f"  Smartsheet returned {status} on attempt {attempt}/{retries} — retrying in {wait}s...")
+                time.sleep(wait)
+            else:
+                raise
 
 # ─── Surrogate-safe string sanitizer ─────────────────────────────────────────
 def safe_str(text):
