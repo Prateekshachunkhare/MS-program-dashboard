@@ -451,12 +451,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <body>
 
 <div class="tab-bar">
-  <button class="tab active" onclick="showTab('main')">&#128202; MS Dashboard</button>
-  <button class="tab" onclick="showTab('release')">&#128197; Release Calendar</button>
-  <button class="tab" onclick="showTab('msconv')">&#128260; MS Convergence</button>
-  <button class="tab" onclick="showTab('co1')">&#128994; Change Order Ph 1</button>
-  <button class="tab" onclick="showTab('co2')">&#128993; Change Order Ph 2</button>
-  <button class="tab" onclick="showTab('to2')">&#127919; Targeted Offer 2.0</button>
+  <button class="tab active" onclick="showTab('main',this)">&#128202; MS Dashboard</button>
+  <button class="tab" onclick="showTab('release',this)">&#128197; Release Calendar</button>
+  <button class="tab" onclick="showTab('msconv',this)">&#128260; MS Convergence</button>
+  <button class="tab" onclick="showTab('co1',this)">&#128994; Change Order Ph 1</button>
+  <button class="tab" onclick="showTab('co2',this)">&#128993; Change Order Ph 2</button>
+  <button class="tab" onclick="showTab('to2',this)">&#127919; Targeted Offer 2.0</button>
 </div>
 
 <!-- PAGE 1: MS DASHBOARD -->
@@ -647,11 +647,11 @@ const CO_WBS_SS_URL  = 'CO_WBS_SS_URL_PLACEHOLDER';
 const msConvData = MS_CONV_WBS_PLACEHOLDER;
 const coWbsData  = CO_WBS_PLACEHOLDER;
 
-function showTab(id) {
+function showTab(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if (el) el.classList.add('active');
 }
 
 /* ── ACTION ITEMS ── */
@@ -995,13 +995,14 @@ function renderWbsGroups(data, containerId) {
       +'</div>'
     ).join('');
     card.innerHTML =
-      '<div class="ms-group-header" onclick="toggleWbsCard(\''+containerId+'\','+gi+')">'
+      '<div class="ms-group-header" id="whdr-'+containerId+'-'+gi+'">'
       +'<div><div class="ms-group-name">'+group.name+'</div>'
       +'<div class="proj-card-dates">'+total+' task'+(total!==1?'s':'')+'</div></div>'
       +'<div class="ms-group-chips">'+chips+'<span class="chevron" id="wchev-'+containerId+'-'+gi+'">&#9660;</span></div>'
       +'</div>'
       +'<div class="proj-progress-bar" style="margin:10px 0 6px">'+pbSegs+'</div>'
       +'<div class="ms-group-body" id="wbsbody-'+containerId+'-'+gi+'">'+taskRows+'</div>';
+    card.querySelector('.ms-group-header').addEventListener('click', (function(cid,g){return function(){toggleWbsCard(cid,g);};})(containerId,gi));
     container.appendChild(card);
   });
 }
