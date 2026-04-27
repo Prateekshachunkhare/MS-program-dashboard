@@ -152,9 +152,6 @@ HTML_TEMPLATE = """\
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marketing Studio &middot; Program Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"
-  integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi"
-  crossorigin="anonymous"></script>
 <style>
 :root {
   --brand:#4f46e5; --brand-light:#ede9fe; --brand-mid:#c7d2fe;
@@ -168,8 +165,8 @@ HTML_TEMPLATE = """\
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:20px 20px 60px;min-height:100vh}
-.tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border)}
-.tab{padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px 8px 0 0;color:var(--gray);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s}
+.tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);flex-wrap:wrap}
+.tab{padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;border-radius:8px 8px 0 0;color:var(--gray);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap}
 .tab:hover{color:var(--brand)}
 .tab.active{color:var(--brand);border-bottom-color:var(--brand);background:var(--brand-light)}
 .page{display:none}.page.active{display:block}
@@ -303,6 +300,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .track-co1{background:#ecfdf5;color:#065f46}
 .track-co2{background:#fff7ed;color:#9a3412}
 .footer{font-size:10.5px;color:#d1d5db;text-align:right;margin-top:14px}
+.blank-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:340px;text-align:center;gap:14px;color:var(--gray)}
+.blank-page-icon{font-size:48px;opacity:.35}
+.blank-page-title{font-size:16px;font-weight:700;color:var(--text-2)}
+.blank-page-sub{font-size:12.5px;color:var(--gray);max-width:320px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -310,6 +311,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="tab-bar">
   <button class="tab active" onclick="showTab('main')">&#128202; MS Dashboard</button>
   <button class="tab" onclick="showTab('release')">&#128197; Release Calendar</button>
+  <button class="tab" onclick="showTab('msconv')">&#128260; MS Convergence</button>
+  <button class="tab" onclick="showTab('co1')">&#128994; Change Order Ph 1</button>
+  <button class="tab" onclick="showTab('co2')">&#128993; Change Order Ph 2</button>
+  <button class="tab" onclick="showTab('to2')">&#127919; Targeted Offer 2.0</button>
 </div>
 
 <!-- PAGE 1: MS DASHBOARD -->
@@ -342,22 +347,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
 
-  <div class="rel-two-col">
-    <div class="chart-card">
-      <h3>Overall Milestone Status</h3>
-      <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
-      <div class="status-legend">
-        <div class="s-chip s-done"><div class="s-chip-dot" style="background:#10b981"></div>Completed &middot; 1</div>
-        <div class="s-chip s-prog"><div class="s-chip-dot" style="background:#f59e0b"></div>In Progress &middot; 4</div>
-        <div class="s-chip s-ns"><div class="s-chip-dot" style="background:#6366f1"></div>Not Started &middot; 14</div>
-        <div class="s-chip s-block"><div class="s-chip-dot" style="background:#ef4444"></div>Blocked &middot; 1</div>
-      </div>
-    </div>
-    <div>
-      <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
-      <div id="projCards"></div>
-    </div>
-  </div>
+  <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
+  <div id="projCards" style="margin-bottom:20px"></div>
 
   <div class="proj-detail" id="projDetail">
     <div class="proj-detail-header">
@@ -374,11 +365,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="summary-card"><div class="val val-brand">TOTAL_ITEMS_PLACEHOLDER</div><div class="lbl">Open Items</div></div>
     <div class="summary-card"><div class="val val-green">NUM_OWNERS_PLACEHOLDER</div><div class="lbl">Owners</div></div>
     <div class="summary-card"><div class="val val-red">TOTAL_OVERDUE_PLACEHOLDER</div><div class="lbl">Overdue</div></div>
-  </div>
-
-  <div class="chart-card" style="max-width:520px;margin-bottom:24px">
-    <h3>Items by Owner</h3>
-    <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
   </div>
 
   <div class="section-title">Owner Breakdown &mdash; click a card to drill down</div>
@@ -440,6 +426,66 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="footer">Source: Marketing Studio Program Binder &middot; Last updated LAST_SYNCED_PLACEHOLDER</div>
 </div>
 
+<!-- PAGE 3: MS CONVERGENCE -->
+<div id="page-msconv" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; MS Convergence</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#128260;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the MS Convergence program view will be added here.</div>
+  </div>
+</div>
+
+<!-- PAGE 4: CHANGE ORDER PH 1 -->
+<div id="page-co1" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; Change Order Ph 1</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#128994;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the Change Order Phase 1 program view will be added here.</div>
+  </div>
+</div>
+
+<!-- PAGE 5: CHANGE ORDER PH 2 -->
+<div id="page-co2" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; Change Order Ph 2</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#128993;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the Change Order Phase 2 program view will be added here.</div>
+  </div>
+</div>
+
+<!-- PAGE 6: TARGETED OFFER 2.0 -->
+<div id="page-to2" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; Targeted Offer 2.0</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#127919;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the Targeted Offer 2.0 program view will be added here.</div>
+  </div>
+</div>
+
 <script>
 const SHEET_URL = 'SHEET_URL_PLACEHOLDER';
 
@@ -455,24 +501,6 @@ const PALETTE = ['#4f46e5','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#d
 const owners = OWNERS_JSON_PLACEHOLDER;
 
 function initials(n) { return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
-
-(function() {
-  const dc = document.getElementById('donutChart').getContext('2d');
-  new Chart(dc, {
-    type: 'doughnut',
-    data: {
-      labels: owners.map(o => o.name.split(' ')[0]),
-      datasets: [{ data: owners.map(o => o.total), backgroundColor: PALETTE, borderColor: '#fff', borderWidth: 3, hoverOffset: 8 }]
-    },
-    options: {
-      cutout: '62%',
-      plugins: {
-        legend: { position: 'right', labels: { font:{size:10}, color:'#374151', boxWidth:11, padding:9 }},
-        tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + c.parsed + ' items' }}
-      }
-    }
-  });
-})();
 
 let activeOwnerIdx = null;
 (function() {
@@ -521,24 +549,6 @@ function closeDetail() {
 }
 
 /* ── RELEASE CALENDAR ── */
-(function() {
-  const sc = document.getElementById('statusChart').getContext('2d');
-  new Chart(sc, {
-    type: 'doughnut',
-    data: {
-      labels: ['Completed','In Progress','Not Started','Blocked'],
-      datasets: [{ data: [1,4,14,1], backgroundColor: ['#10b981','#f59e0b','#6366f1','#ef4444'], borderColor: '#fff', borderWidth: 3, hoverOffset: 8 }]
-    },
-    options: {
-      cutout: '60%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + c.parsed + ' milestones' }}
-      }
-    }
-  });
-})();
-
 const projects = [
   {
     id:'conv', name:'MS Convergence', dates:'Apr 3 \u2013 May 29, 2026',
