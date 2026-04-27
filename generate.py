@@ -361,6 +361,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .chip-prog{background:var(--amber-light);color:#92400e}
 .chip-ns{background:var(--purple-light);color:#5b21b6}
 .chip-block{background:var(--red-light);color:#991b1b}
+.proj-chip-btn{cursor:pointer;border:none;font:inherit;transition:opacity .15s,transform .1s;line-height:inherit}
+.proj-chip-btn:hover{opacity:.75;transform:scale(1.08)}
+.proj-chip-btn:active{transform:scale(.95)}
 .owner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
 .owner-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;position:relative;transition:box-shadow .18s,border-color .18s,transform .18s;user-select:none}
 .owner-card:hover{box-shadow:0 6px 18px rgba(79,70,229,.12);border-color:var(--brand-mid);transform:translateY(-2px)}
@@ -640,24 +643,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="page-header">
     <div class="header-left">
       <h1>Marketing Studio &middot; Targeted Offer 2.0</h1>
-      <div class="sub">RAID Log &middot; Live from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
+      <div class="sub">RAID Log WBS View &middot; Live from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
     </div>
     <a class="ext-link" href="SHEET_URL_PLACEHOLDER" target="_blank">&#8599; Open RAID Log</a>
   </div>
   <div class="wbs-summary" id="toSummary"></div>
-  <div class="section-title" style="margin-top:16px">Owner Breakdown &mdash; click a card to drill down</div>
-  <div class="owner-grid" id="toOwnerGrid"></div>
-  <div class="detail-panel" id="toDetailPanel">
-    <div class="detail-header">
-      <div class="detail-title">
-        <div class="detail-avatar" id="toDetailAvatar"></div>
-        <div><div class="detail-name" id="toDetailName"></div><div class="detail-count" id="toDetailCount"></div></div>
-      </div>
-      <button class="close-btn" onclick="closeToDetail()">&#215;</button>
-    </div>
-    <div class="link-hint">&#128279; Click any item to open the RAID Log in Smartsheet</div>
-    <ul class="item-list" id="toDetailList"></ul>
-  </div>
+  <div id="toGroups" style="margin-top:16px"></div>
   <div class="footer">Auto-refreshed from Smartsheet &middot; Last sync: LAST_SYNCED_PLACEHOLDER</div>
 </div>
 
@@ -902,35 +893,44 @@ function closeHealthDetail() {
       + (t.notStarted>0 ? '<div class="pb-seg" style="width:'+pNS+'%;background:#6366f1"></div>'   : '')
       + '</div>';
     const statRow = [
-      t.completed>0  ? '<span class="chip chip-done">&#10003; '+t.completed+' Done</span>'               : '',
-      t.inProgress>0 ? '<span class="chip chip-prog">&#8635; '+t.inProgress+' In Progress</span>'        : '',
-      t.blocked>0    ? '<span class="chip chip-block">&#215; '+t.blocked+' Blocked</span>'               : '',
-      t.notStarted>0 ? '<span class="chip chip-ns">&#9675; '+t.notStarted+' Not Started</span>'          : '',
+      t.completed>0  ? '<button class="chip chip-done proj-chip-btn" data-pidx="'+i+'" data-pstatus="completed">&#10003; '+t.completed+' Done</button>'          : '',
+      t.inProgress>0 ? '<button class="chip chip-prog proj-chip-btn" data-pidx="'+i+'" data-pstatus="inProgress">&#8635; '+t.inProgress+' In Progress</button>'  : '',
+      t.blocked>0    ? '<button class="chip chip-block proj-chip-btn" data-pidx="'+i+'" data-pstatus="blocked">&#215; '+t.blocked+' Blocked</button>'             : '',
+      t.notStarted>0 ? '<button class="chip chip-ns proj-chip-btn" data-pidx="'+i+'" data-pstatus="notStarted">&#9675; '+t.notStarted+' Not Started</button>'    : '',
     ].filter(Boolean).join('');
+    const pctDone = tot > 0 ? Math.round(t.completed/tot*100) : 0;
+    const pctColor = pctDone >= 75 ? '#10b981' : pctDone >= 40 ? '#f59e0b' : '#6b7280';
     card.innerHTML = '<div class="proj-card-top">'
       + '<div><div class="proj-card-name">'+proj.name+'</div><div class="proj-card-dates">'+proj.dates+'</div></div>'
       + '<div class="proj-card-right">'
-      + '<div style="text-align:center"><div class="proj-total" style="color:'+proj.color+'">'+proj.total+'</div><div class="proj-total-lbl">Milestones</div></div>'
+      + '<div style="text-align:center;margin-right:4px"><div class="proj-total" style="color:'+proj.color+'">'+proj.total+'</div><div class="proj-total-lbl">Tasks</div></div>'
+      + '<div style="text-align:center;margin-right:4px;padding:0 8px;border-left:1px solid var(--border)"><div class="proj-total" style="color:'+pctColor+'">'+pctDone+'%</div><div class="proj-total-lbl">Complete</div></div>'
       + '<span class="chevron" id="pchev-'+i+'">&#9660;</span>'
       + '</div></div>'
       + progBar
-      + '<div class="proj-status-row">'+statRow+'</div>';
+      + '<div class="proj-status-row" style="gap:6px">'+statRow+'</div>';
+    card.querySelectorAll('.proj-chip-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showProjStatus(parseInt(btn.dataset.pidx), btn.dataset.pstatus);
+      });
+    });
     g.appendChild(card);
   });
 })();
 
 let activeProjIdx = null;
-function toggleProj(idx) {
-  const panel = document.getElementById('projDetail');
-  if (activeProjIdx===idx) { closeProjDetail(); return; }
-  if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
-  activeProjIdx = idx; document.getElementById('pcard-'+idx).classList.add('active');
-  const proj = projects[idx];
-  document.getElementById('projDetailTitle').textContent = proj.name + ' \u2014 Milestone Detail';
+let activeProjStatus = null;
+
+function _renderMilestoneList(milestones) {
   const list = document.getElementById('projMilestoneList'); list.innerHTML = '';
-  proj.milestones.forEach((ms, n) => {
-    const li = document.createElement('li');
-    li.className = 'milestone-li';
+  if (!milestones.length) {
+    const li = document.createElement('li'); li.className = 'milestone-li';
+    li.innerHTML = '<span style="color:var(--gray);font-style:italic">No items in this status.</span>';
+    list.appendChild(li); return;
+  }
+  milestones.forEach((ms, n) => {
+    const li = document.createElement('li'); li.className = 'milestone-li';
     li.innerHTML = '<div class="ms-num">'+(n+1)+'</div>'
       + '<div class="ms-label">'+ms.label+'</div>'
       + '<div class="ms-owner">'+ms.owner+'</div>'
@@ -938,12 +938,41 @@ function toggleProj(idx) {
       + '<span class="chip '+chipClass[ms.status]+'">'+statusLabels[ms.status]+'</span>';
     list.appendChild(li);
   });
+}
+
+function toggleProj(idx) {
+  const panel = document.getElementById('projDetail');
+  if (activeProjIdx===idx && activeProjStatus===null) { closeProjDetail(); return; }
+  if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
+  activeProjIdx = idx; activeProjStatus = null;
+  document.getElementById('pcard-'+idx).classList.add('active');
+  const proj = projects[idx];
+  document.getElementById('projDetailTitle').textContent = proj.name + ' \u2014 All Milestones';
+  _renderMilestoneList(proj.milestones);
   panel.classList.add('visible');
   setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
 }
+
+function showProjStatus(projIdx, statusKey) {
+  const panel = document.getElementById('projDetail');
+  if (activeProjIdx===projIdx && activeProjStatus===statusKey) { closeProjDetail(); return; }
+  if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
+  activeProjIdx = projIdx; activeProjStatus = statusKey;
+  document.getElementById('pcard-'+projIdx).classList.add('active');
+  const proj = projects[projIdx];
+  const keyToMs = {completed:'completed', inProgress:'in-progress', notStarted:'not-started', blocked:'blocked'};
+  const humanLabel = {completed:'Completed', inProgress:'In Progress', notStarted:'Not Started', blocked:'Blocked'};
+  const msStatus = keyToMs[statusKey] || statusKey;
+  document.getElementById('projDetailTitle').textContent = proj.name + ' \u2014 ' + (humanLabel[statusKey] || statusKey);
+  _renderMilestoneList(proj.milestones.filter(ms => ms.status === msStatus));
+  panel.classList.add('visible');
+  setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
+}
+
 function closeProjDetail() {
   if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
-  activeProjIdx = null; document.getElementById('projDetail').classList.remove('visible');
+  activeProjIdx = null; activeProjStatus = null;
+  document.getElementById('projDetail').classList.remove('visible');
 }
 
 /* ── GANTT ── */
@@ -1100,70 +1129,29 @@ function toggleWbsCard(cid, gi) {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
-/* ── TARGETED OFFER tab owner grid (duplicate of main, different IDs) ── */
-let activeToOwnerIdx = null;
-(function() {
-  const toSummary = document.getElementById('toSummary');
-  if (toSummary) {
-    const total = owners.reduce((s,o)=>s+o.total,0);
-    const overdue = owners.reduce((s,o)=>s+o.overdue,0);
-    const numOwners = owners.length;
-    toSummary.innerHTML = '<div class="metric-strip">'
-      +'<div class="metric-strip-item"><div class="metric-strip-val" style="color:var(--brand)">'+total+'</div><div class="metric-strip-lbl">Open Items</div></div>'
-      +'<div class="metric-strip-item"><div class="metric-strip-val" style="color:var(--green)">'+numOwners+'</div><div class="metric-strip-lbl">Owners</div></div>'
-      +'<div class="metric-strip-item"><div class="metric-strip-val" style="color:var(--red)">'+overdue+'</div><div class="metric-strip-lbl">Overdue</div></div>'
-      +'</div>';
-  }
-  const g = document.getElementById('toOwnerGrid');
-  if (!g) return;
-  owners.forEach((o, i) => {
-    const c = document.createElement('div');
-    c.className = 'owner-card'; c.id = 'tocard-' + i; c.onclick = () => toggleToOwner(i);
-    c.innerHTML = '<div class="status-bar ' + (o.overdue>0?'overdue':'ok') + '"></div>'
-      + '<div class="owner-top">'
-      + '<div class="owner-avatar" style="background:' + PALETTE[i%PALETTE.length] + '">' + initials(o.name) + '</div>'
-      + '<div class="owner-name-wrap"><div class="owner-name">' + o.name + '</div></div>'
-      + '<span class="chevron" id="tochev-' + i + '">&#9660;</span>'
-      + '</div>'
-      + '<div class="owner-stats">'
-      + '<div class="stat-box"><div class="num num-brand">' + o.total + '</div><div class="lbl">Total</div></div>'
-      + '<div class="stat-box"><div class="num ' + (o.overdue>0?'num-red':'num-green') + '">' + o.overdue + '</div><div class="lbl">Overdue</div></div>'
-      + '</div>'
-      + (o.overdue>0 ? '<div class="risk-pill">&#9888; ' + o.overdueDetail + '</div>' : '');
-    g.appendChild(c);
+/* ── TARGETED OFFER tab — WBS view built from RAID log items ── */
+const toWbsData = (function() {
+  var groups = [], totals = {completed:0, inProgress:0, notStarted:0, blocked:0};
+  owners.forEach(function(o) {
+    if (!o.items || !o.items.length) return;
+    var tasks = o.items.map(function(item) {
+      var s = item.od ? 'blocked' : 'inProgress';
+      return {task: item.t, owner: o.name, status: s, date: item.od ? o.overdueDetail : ''};
+    });
+    var counts = {completed:0, inProgress:0, notStarted:0, blocked:0};
+    tasks.forEach(function(t) { counts[t.status]++; totals[t.status]++; });
+    groups.push({name: o.name, tasks: tasks, counts: counts});
   });
+  return {groups: groups, totals: totals};
 })();
-
-function toggleToOwner(idx) {
-  const p = document.getElementById('toDetailPanel');
-  if (activeToOwnerIdx===idx) { closeToDetail(); return; }
-  if (activeToOwnerIdx!==null) document.getElementById('tocard-'+activeToOwnerIdx).classList.remove('active');
-  activeToOwnerIdx = idx; document.getElementById('tocard-'+idx).classList.add('active');
-  const o = owners[idx];
-  const av = document.getElementById('toDetailAvatar'); av.textContent = initials(o.name); av.style.background = PALETTE[idx%PALETTE.length];
-  document.getElementById('toDetailName').textContent = o.name;
-  document.getElementById('toDetailCount').textContent = o.total + ' action item' + (o.total!==1?'s':'') + (o.overdue>0?' · '+o.overdue+' overdue':'');
-  const list = document.getElementById('toDetailList'); list.innerHTML = '';
-  o.items.forEach((item, n) => {
-    const li = document.createElement('li');
-    const badge = item.od ? '<span class="overdue-badge">&#9888; OVERDUE</span>' : '';
-    li.innerHTML = '<div class="item-num ' + (item.od?'od':'') + '">' + (n+1) + '</div>'
-      + '<span><a class="item-link" href="' + SHEET_URL + '" target="_blank">' + item.t + '<span class="ss-icon">&#8599;</span></a>' + badge + '</span>';
-    list.appendChild(li);
-  });
-  p.classList.add('visible');
-  setTimeout(() => p.scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
-}
-function closeToDetail() {
-  if (activeToOwnerIdx!==null) document.getElementById('tocard-'+activeToOwnerIdx).classList.remove('active');
-  activeToOwnerIdx = null; document.getElementById('toDetailPanel').classList.remove('visible');
-}
 
 /* ── INIT WBS PAGES ── */
 renderWbsSummary(msConvData, 'msconvSummary');
 renderWbsGroups(msConvData, 'msconvGroups');
 renderWbsSummary(coWbsData, 'cowbsSummary');
 renderWbsGroups(coWbsData, 'cowbsGroups');
+renderWbsSummary(toWbsData, 'toSummary');
+renderWbsGroups(toWbsData, 'toGroups');
 </script>
 </body>
 </html>
