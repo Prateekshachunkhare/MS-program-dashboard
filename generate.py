@@ -301,13 +301,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--gray);margin-bottom:8px;display:flex;align-items:center;gap:5px}
 .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:12px}
 .section-divider{border:none;border-top:1px solid var(--border);margin:18px 0}
-.summary-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
-.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);min-width:110px;flex:1}
+.summary-row{display:flex;gap:12px;margin-bottom:24px;width:100%}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);flex:1 1 0;min-width:0}
 .summary-card .val{font-size:28px;font-weight:900;line-height:1}
 .summary-card .lbl{font-size:9.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
 .val-brand{color:var(--brand)}.val-green{color:var(--green)}.val-red{color:var(--red)}
-.rel-tiles{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.rel-tile{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);flex:1;min-width:0}
+.rel-tiles{display:flex;gap:10px;margin-bottom:10px;width:100%}
+.rel-tile{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);flex:1 1 0;min-width:0}
 .rel-tile-icon{font-size:18px;line-height:1}
 .rel-tile-val{font-size:20px;font-weight:900;line-height:1}
 .rel-tile-lbl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
@@ -835,6 +835,7 @@ let activeHealthKey = null;
     const div = document.createElement('div');
     div.className = 'health-card';
     div.dataset.key = c.k;
+    div.setAttribute('data-key', c.k);
     div.innerHTML = '<div class="h-val" style="color:'+c.color+'">'+totals[c.k]+'</div>'
       + '<div class="h-lbl">'+c.label+'</div>'
       + '<div class="h-sub">'+c.sub+'</div>';
@@ -844,23 +845,24 @@ let activeHealthKey = null;
 })();
 
 function showHealthDetail(key) {
-  const detail  = document.getElementById('healthDetail');
-  const title   = document.getElementById('healthDetailTitle');
-  const content = document.getElementById('healthDetailContent');
-  document.querySelectorAll('.health-card').forEach(c => c.classList.remove('active'));
-  const activeCard = document.querySelector('.health-card[data-key="'+key+'"]');
+  var detailEl  = document.getElementById('healthDetail');
+  var titleEl   = document.getElementById('healthDetailTitle');
+  var bodyEl    = document.getElementById('healthDetailContent');
+  if (!detailEl || !titleEl || !bodyEl) return;
+  document.querySelectorAll('.health-card').forEach(function(c){ c.classList.remove('active'); });
+  var activeCard = document.querySelector('[data-key="'+key+'"]');
   if (activeCard) activeCard.classList.add('active');
-  if (activeHealthKey === key && detail.classList.contains('visible')) { closeHealthDetail(); return; }
+  if (activeHealthKey === key && detailEl.style.display === 'block') { closeHealthDetail(); return; }
   activeHealthKey = key;
-  const labels = {completed:'Completed', inProgress:'In Progress', notStarted:'Not Started', blocked:'Blocked / At Risk'};
-  const colors = {completed:'var(--green)', inProgress:'var(--amber)', notStarted:'var(--brand)', blocked:'var(--red)'};
-  title.innerHTML = '<span style="color:'+colors[key]+'">'+labels[key]+'</span> &mdash; All Items ('+(healthItems[key]||[]).length+')';
-  const items = healthItems[key] || [];
+  var labels = {completed:'Completed', inProgress:'In Progress', notStarted:'Not Started', blocked:'Blocked / At Risk'};
+  var colors = {completed:'var(--green)', inProgress:'var(--amber)', notStarted:'var(--brand)', blocked:'var(--red)'};
+  titleEl.innerHTML = '<span style="color:'+colors[key]+'">'+labels[key]+'</span> &mdash; All Items ('+(healthItems[key]||[]).length+')';
+  var items = healthItems[key] || [];
   if (items.length === 0) {
-    content.innerHTML = '<div style="color:var(--gray);font-size:13px;padding:12px 0">No items in this category.</div>';
+    bodyEl.innerHTML = '<div style="color:var(--gray);font-size:13px;padding:12px 0">No items in this category.</div>';
   } else {
-    const trackCss = {'MS Convergence':'ht-conv','Change Orders':'ht-co','Targeted Offer':'ht-raid'};
-    content.innerHTML = items.map(function(item) {
+    var trackCss = {'MS Convergence':'ht-conv','Change Orders':'ht-co','Targeted Offer':'ht-raid'};
+    bodyEl.innerHTML = items.map(function(item) {
       var tc = trackCss[item.track] || 'ht-raid';
       return '<div class="health-item-row">'
         + '<span class="health-item-track '+tc+'">'+item.track+'</span>'
@@ -871,14 +873,16 @@ function showHealthDetail(key) {
         + '</div>';
     }).join('');
   }
-  detail.classList.add('visible');
-  setTimeout(function(){ detail.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 60);
+  detailEl.classList.add('visible');
+  detailEl.style.display = 'block';
+  setTimeout(function(){ detailEl.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 60);
 }
 
 function closeHealthDetail() {
-  document.querySelectorAll('.health-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.health-card').forEach(function(c){ c.classList.remove('active'); });
   activeHealthKey = null;
-  document.getElementById('healthDetail').classList.remove('visible');
+  var detailEl = document.getElementById('healthDetail');
+  if (detailEl) { detailEl.classList.remove('visible'); detailEl.style.display = ''; }
 }
 
 (function() {
