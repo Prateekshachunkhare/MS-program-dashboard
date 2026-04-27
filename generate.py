@@ -20,6 +20,11 @@ SS_BASE     = f"https://app.smartsheet.com/sheets/{SS_ALPHA_ID}"
 SHEET_URL   = f"{SS_BASE}?view=grid"
 BINDER_URL  = "https://docs.google.com/spreadsheets/d/1ThmYPfgTH_zhlmuJr63H47UzonJquO6QWHxkvXrP9tw/edit?gid=565365486#gid=565365486"
 
+MS_CONV_SHEET_ID = "905349279207300"
+CO_WBS_SHEET_ID  = "3526224222572420"
+MS_CONV_SS_URL   = "https://app.smartsheet.com/sheets/WcJRFcqhF6qJR8fHWMjJ5Jx99q8qrCvxFFg3Pc41"
+CO_WBS_SS_URL    = "https://app.smartsheet.com/sheets/vp5r93RjCf9QvVPw38mJM627Xg66gVPpFwR97Rh1"
+
 INCLUDE_TYPES = {"Action Item", "Risk"}
 
 # ─── Fetch sheet (with retries for transient 5xx errors) ─────────────────────
@@ -143,6 +148,97 @@ def parse_owners(sheet):
         print(f"    {o['name']}: {o['total']} items, {o['overdue']} overdue")
 
     return result
+
+# ─── Fetch WBS sheet (same retry logic, sheet_id as parameter) ───────────────
+def fetch_wbs(sheet_id, retries=4, backoff=5):
+    headers = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/json"}
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.get(
+                f"https://api.smartsheet.com/2.0/sheets/{sheet_id}",
+                headers=headers,
+                params={"include": "objectValue"},
+                timeout=30
+            )
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status and status >= 500 and attempt < retries:
+                wait = backoff * attempt
+                print(f"  Smartsheet returned {status} on attempt {attempt}/{retries} — retrying in {wait}s...")
+                time.sleep(wait)
+            else:
+                raise
+
+# ─── Parse WBS sheet ──────────────────────────────────────────────────────────
+def parse_wbs(sheet):
+    STATUS_NORM = {
+        "Completed":     "completed",
+        "In Progress":   "inProgress",
+        "Not Started":   "notStarted",
+        "Blocked":       "blocked",
+        "Not Applicable":"notStarted",
+    }
+
+    col = {}
+    for c in sheet.get("columns", []):
+        col[c["title"].strip()] = c["id"]
+
+    primary_col = col.get("Milestone / Task")
+    owner_col   = col.get("Owner")
+    status_col  = col.get("Status")
+    date_col    = col.get("Target Date")
+
+    groups = []
+    current_group = None
+    totals = {"completed": 0, "inProgress": 0, "notStarted": 0, "blocked": 0}
+
+    for row in sheet.get("rows", []):
+        cells = {}
+        for cell in row.get("cells", []):
+            cells[cell.get("columnId")] = cell
+
+        primary_val = cell_text(cells.get(primary_col))
+        if not primary_val:
+            continue
+
+        # Skip plan headers starting with ▶
+        if primary_val.startswith("▶"):
+            continue
+
+        # New section header group (doesn't start with "[")
+        if not primary_val.startswith("["):
+            if current_group and current_group["tasks"]:
+                groups.append(current_group)
+            current_group = {"name": primary_val, "tasks": [], "counts": {"completed": 0, "inProgress": 0, "notStarted": 0, "blocked": 0}}
+            continue
+
+        # Task row starts with "["
+        if current_group is None:
+            continue
+
+        # Extract [MilestoneName] task_description
+        bracket_end = primary_val.find("]")
+        if bracket_end == -1:
+            task_desc = primary_val
+        else:
+            task_desc = primary_val[bracket_end + 1:].strip()
+
+        owner  = cell_text(cells.get(owner_col))
+        status_raw = cell_text(cells.get(status_col))
+        status = STATUS_NORM.get(status_raw, "notStarted")
+        date   = cell_text(cells.get(date_col))
+
+        task = {"task": task_desc, "owner": owner, "status": status, "date": date}
+        current_group["tasks"].append(task)
+        current_group["counts"][status] = current_group["counts"].get(status, 0) + 1
+        totals[status] = totals.get(status, 0) + 1
+
+    if current_group and current_group["tasks"]:
+        groups.append(current_group)
+
+    return {"groups": groups, "totals": totals}
 
 # ─── HTML template ────────────────────────────────────────────────────────────
 HTML_TEMPLATE = """\
@@ -304,6 +400,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .blank-page-icon{font-size:48px;opacity:.35}
 .blank-page-title{font-size:16px;font-weight:700;color:var(--text-2)}
 .blank-page-sub{font-size:12.5px;color:var(--gray);max-width:320px;line-height:1.6}
+.health-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.health-card{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.health-card .h-val{font-size:32px;font-weight:900;line-height:1}
+.health-card .h-lbl{font-size:9.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
+.health-card .h-sub{font-size:10px;color:var(--gray);margin-top:3px}
+.ms-group-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .18s,border-color .18s}
+.ms-group-card:hover{box-shadow:0 4px 14px rgba(79,70,229,.1);border-color:var(--brand-mid)}
+.ms-group-card.open{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-mid)}
+.ms-group-header{display:flex;align-items:center;justify-content:space-between}
+.ms-group-name{font-size:13.5px;font-weight:800;color:var(--text)}
+.ms-group-chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ms-group-body{display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+.ms-group-body.open{display:block}
+.wbs-task-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.wbs-task-row:last-child{border-bottom:none}
+.wbs-task-name{flex:1;color:var(--text-2);font-weight:500}
+.wbs-task-owner{font-size:11px;color:var(--gray);min-width:100px;text-align:right;flex-shrink:0}
+.wbs-task-date{font-size:11px;font-weight:600;color:var(--text);margin-left:6px;flex-shrink:0}
+.wbs-summary{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
 </style>
 </head>
 <body>
@@ -327,6 +442,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <a class="ext-link" href="SHEET_URL_PLACEHOLDER" target="_blank">&#8599; Open RAID Log</a>
   </div>
 
+  <div class="section-label">&#128200; Overall Program Health</div>
+  <div class="health-strip" id="healthStrip"></div>
+
+  <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
+  <div id="projCards" style="margin-bottom:20px"></div>
+
+  <div class="proj-detail" id="projDetail">
+    <div class="proj-detail-header">
+      <div class="proj-detail-title" id="projDetailTitle"></div>
+      <button class="close-btn" onclick="closeProjDetail()">&#215;</button>
+    </div>
+    <ul class="milestone-list" id="projMilestoneList"></ul>
+  </div>
+
+  <hr class="section-divider">
+
   <div class="section-label">&#128197; Release Calendar</div>
   <div class="rel-tiles">
     <div class="rel-tile">
@@ -345,17 +476,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="rel-tile-icon">&#128640;</div>
       <div><div class="rel-tile-val" style="color:#f59e0b">Jun 12</div><div class="rel-tile-lbl">CO Ph2 Launch</div></div>
     </div>
-  </div>
-
-  <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
-  <div id="projCards" style="margin-bottom:20px"></div>
-
-  <div class="proj-detail" id="projDetail">
-    <div class="proj-detail-header">
-      <div class="proj-detail-title" id="projDetailTitle"></div>
-      <button class="close-btn" onclick="closeProjDetail()">&#215;</button>
-    </div>
-    <ul class="milestone-list" id="projMilestoneList"></ul>
   </div>
 
   <hr class="section-divider">
@@ -431,29 +551,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="page-header">
     <div class="header-left">
       <h1>Marketing Studio &middot; MS Convergence</h1>
-      <div class="sub">Q2 2026</div>
+      <div class="sub">Q2 2026 &middot; Live from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
     </div>
+    <a class="ext-link" href="MS_CONV_SS_URL_PLACEHOLDER" target="_blank">&#8599; Open WBS</a>
   </div>
-  <div class="blank-page">
-    <div class="blank-page-icon">&#128260;</div>
-    <div class="blank-page-title">Coming Soon</div>
-    <div class="blank-page-sub">Content for the MS Convergence program view will be added here.</div>
-  </div>
+  <div class="wbs-summary" id="msconvSummary"></div>
+  <div id="msconvGroups"></div>
 </div>
 
-<!-- PAGE 4: CHANGE ORDER PH 1 -->
+<!-- PAGE 4: CHANGE ORDER -->
 <div id="page-co1" class="page">
   <div class="page-header">
     <div class="header-left">
-      <h1>Marketing Studio &middot; Change Order Ph 1</h1>
-      <div class="sub">Q2 2026</div>
+      <h1>Marketing Studio &middot; Change Order WBS</h1>
+      <div class="sub">Ph1 &amp; Ph2 Combined &middot; Q2 2026 &middot; Live from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
     </div>
+    <a class="ext-link" href="CO_WBS_SS_URL_PLACEHOLDER" target="_blank">&#8599; Open WBS</a>
   </div>
-  <div class="blank-page">
-    <div class="blank-page-icon">&#128994;</div>
-    <div class="blank-page-title">Coming Soon</div>
-    <div class="blank-page-sub">Content for the Change Order Phase 1 program view will be added here.</div>
-  </div>
+  <div class="wbs-summary" id="cowbsSummary"></div>
+  <div id="cowbsGroups"></div>
 </div>
 
 <!-- PAGE 5: CHANGE ORDER PH 2 -->
@@ -466,8 +582,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
   <div class="blank-page">
     <div class="blank-page-icon">&#128993;</div>
-    <div class="blank-page-title">Coming Soon</div>
-    <div class="blank-page-sub">Content for the Change Order Phase 2 program view will be added here.</div>
+    <div class="blank-page-title">View Combined WBS</div>
+    <div class="blank-page-sub">Change Order Ph1 &amp; Ph2 combined WBS is available on the Change Order tab.</div>
   </div>
 </div>
 
@@ -476,18 +592,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="page-header">
     <div class="header-left">
       <h1>Marketing Studio &middot; Targeted Offer 2.0</h1>
-      <div class="sub">Q2 2026</div>
+      <div class="sub">RAID Log &middot; Live from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
     </div>
+    <a class="ext-link" href="SHEET_URL_PLACEHOLDER" target="_blank">&#8599; Open RAID Log</a>
   </div>
-  <div class="blank-page">
-    <div class="blank-page-icon">&#127919;</div>
-    <div class="blank-page-title">Coming Soon</div>
-    <div class="blank-page-sub">Content for the Targeted Offer 2.0 program view will be added here.</div>
+  <div class="wbs-summary" id="toSummary"></div>
+  <div class="section-title" style="margin-top:16px">Owner Breakdown &mdash; click a card to drill down</div>
+  <div class="owner-grid" id="toOwnerGrid"></div>
+  <div class="detail-panel" id="toDetailPanel">
+    <div class="detail-header">
+      <div class="detail-title">
+        <div class="detail-avatar" id="toDetailAvatar"></div>
+        <div><div class="detail-name" id="toDetailName"></div><div class="detail-count" id="toDetailCount"></div></div>
+      </div>
+      <button class="close-btn" onclick="closeToDetail()">&#215;</button>
+    </div>
+    <div class="link-hint">&#128279; Click any item to open the RAID Log in Smartsheet</div>
+    <ul class="item-list" id="toDetailList"></ul>
   </div>
+  <div class="footer">Auto-refreshed from Smartsheet &middot; Last sync: LAST_SYNCED_PLACEHOLDER</div>
 </div>
 
 <script>
 const SHEET_URL = 'SHEET_URL_PLACEHOLDER';
+const MS_CONV_SS_URL = 'MS_CONV_SS_URL_PLACEHOLDER';
+const CO_WBS_SS_URL  = 'CO_WBS_SS_URL_PLACEHOLDER';
+const msConvData = MS_CONV_WBS_PLACEHOLDER;
+const coWbsData  = CO_WBS_PLACEHOLDER;
 
 function showTab(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -551,7 +682,7 @@ function closeDetail() {
 /* ── RELEASE CALENDAR ── */
 const projects = [
   {
-    id:'conv', name:'MS Convergence', dates:'Apr 3 \u2013 May 29, 2026',
+    id:'conv', name:'MS Convergence', dates:'Apr 3 – May 29, 2026',
     color:'#4f46e5',
     counts:{completed:1, inProgress:1, blocked:1, notStarted:5}, total:8,
     milestones:[
@@ -566,7 +697,7 @@ const projects = [
     ]
   },
   {
-    id:'co1', name:'Change Orders Ph1', dates:'Apr 20 \u2013 Jun 5, 2026',
+    id:'co1', name:'Change Orders Ph1', dates:'Apr 20 – Jun 5, 2026',
     color:'#059669',
     counts:{completed:0, inProgress:2, blocked:0, notStarted:4}, total:6,
     milestones:[
@@ -579,7 +710,7 @@ const projects = [
     ]
   },
   {
-    id:'co2', name:'Change Orders Ph2', dates:'Apr 22 \u2013 Jun 19, 2026',
+    id:'co2', name:'Change Orders Ph2', dates:'Apr 22 – Jun 19, 2026',
     color:'#d97706',
     counts:{completed:0, inProgress:1, blocked:0, notStarted:5}, total:6,
     milestones:[
@@ -590,11 +721,59 @@ const projects = [
       {label:'\U0001F3AF Production Launch', owner:'NEERAJ GANG', end:'Jun 12', status:'not-started'},
       {label:'Post Launch + Metrics', owner:'Bharatkumar', end:'Jun 19', status:'not-started'},
     ]
+  },
+  {
+    id:'to2', name:'Targeted Offer 2.0', dates:'Q2 2026',
+    color:'#be185d',
+    get counts() {
+      const open = owners.length;
+      const overdue = owners.filter(o => o.overdue > 0).length;
+      return {completed: 0, inProgress: open - overdue, blocked: overdue, notStarted: 0};
+    },
+    get total() { return owners.length; },
+    get milestones() {
+      return owners.slice(0,8).map(o => ({
+        label: o.name + ' — ' + o.total + ' item' + (o.total!==1?'s':''),
+        owner: o.name,
+        end: o.overdue > 0 ? o.overdueDetail : 'On track',
+        status: o.overdue > 0 ? 'blocked' : 'in-progress'
+      }));
+    }
   }
 ];
 
 const statusLabels = {completed:'Done','in-progress':'In Progress','not-started':'Not Started',blocked:'Blocked'};
 const chipClass = {completed:'chip-done','in-progress':'chip-prog','not-started':'chip-ns',blocked:'chip-block'};
+
+/* ── HEALTH STRIP ── */
+(function buildHealthStrip() {
+  const totals = {completed:0, inProgress:0, notStarted:0, blocked:0};
+  [msConvData, coWbsData].forEach(d => {
+    Object.keys(totals).forEach(k => { totals[k] += (d.totals[k]||0); });
+  });
+  // add RAID items count
+  const raidOpen = owners.reduce((s,o) => s + o.total, 0);
+  const raidOD   = owners.reduce((s,o) => s + o.overdue, 0);
+  totals.inProgress += raidOpen - raidOD;
+  totals.blocked    += raidOD;
+
+  const total = Object.values(totals).reduce((a,b)=>a+b,0);
+  const cfg = [
+    {k:'completed',  label:'Completed',  color:'var(--green)',  sub:'tasks done'},
+    {k:'inProgress', label:'In Progress', color:'var(--amber)',  sub:'actively tracked'},
+    {k:'blocked',    label:'Blocked / At Risk', color:'var(--red)',   sub:'need attention'},
+    {k:'notStarted', label:'Not Started', color:'var(--brand)',  sub:'upcoming'},
+  ];
+  const strip = document.getElementById('healthStrip');
+  cfg.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'health-card';
+    div.innerHTML = '<div class="h-val" style="color:'+c.color+'">'+totals[c.k]+'</div>'
+      + '<div class="h-lbl">'+c.label+'</div>'
+      + '<div class="h-sub">'+c.sub+'</div>';
+    strip.appendChild(div);
+  });
+})();
 
 (function() {
   const g = document.getElementById('projCards');
@@ -738,39 +917,193 @@ allMilestones.forEach(m => {
   tr.innerHTML = '<td>'+(trackMap[m.track]||m.track)+'</td><td style="font-weight:500">'+m.label+'</td><td style="color:#6b7280;font-size:11px">'+m.owner+'</td><td style="font-size:11px">'+m.start+'</td><td style="font-weight:600">'+m.end+'</td><td>'+(statusMap[m.status]||m.status)+'</td>';
   tbody.appendChild(tr);
 });
+
+/* ── WBS PAGE RENDERER ── */
+const STATUS_COLORS_WBS = {completed:'#10b981',inProgress:'#f59e0b',notStarted:'#6366f1',blocked:'#ef4444'};
+const STATUS_LABELS_WBS = {completed:'Completed',inProgress:'In Progress',notStarted:'Not Started',blocked:'Blocked'};
+const STATUS_CHIP_WBS   = {completed:'chip-done',inProgress:'chip-prog',notStarted:'chip-ns',blocked:'chip-block'};
+
+function renderWbsSummary(data, containerId) {
+  const t = data.totals;
+  const total = Object.values(t).reduce((a,b)=>a+b,0);
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '<div class="metric-strip">'
+    + ['completed','inProgress','notStarted','blocked'].map(k =>
+        '<div class="metric-strip-item">'
+        +'<div class="metric-strip-val" style="color:'+STATUS_COLORS_WBS[k]+'">'+t[k]+'</div>'
+        +'<div class="metric-strip-lbl">'+STATUS_LABELS_WBS[k]+'</div>'
+        +'</div>'
+      ).join('')
+    + '</div>';
+}
+
+function renderWbsGroups(data, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  data.groups.forEach((group, gi) => {
+    const total = group.tasks.length;
+    const card = document.createElement('div');
+    card.className = 'ms-group-card';
+    card.id = 'wbscard-'+containerId+'-'+gi;
+    // progress bar segments
+    const keys = ['completed','inProgress','blocked','notStarted'];
+    const pbSegs = keys.map(k => {
+      if (!group.counts[k]) return '';
+      const pct = (group.counts[k]/total*100).toFixed(1);
+      return '<div class="pb-seg" style="width:'+pct+'%;background:'+STATUS_COLORS_WBS[k]+'"></div>';
+    }).join('');
+    // chips
+    const chips = keys.filter(k => group.counts[k]>0).map(k =>
+      '<span class="chip '+STATUS_CHIP_WBS[k]+'">'+group.counts[k]+' '+STATUS_LABELS_WBS[k]+'</span>'
+    ).join('');
+    // tasks
+    const taskRows = group.tasks.map(t =>
+      '<div class="wbs-task-row">'
+      +'<span class="chip '+STATUS_CHIP_WBS[t.status]+'" style="flex-shrink:0;margin-left:0">'+STATUS_LABELS_WBS[t.status]+'</span>'
+      +'<span class="wbs-task-name">'+t.task+'</span>'
+      +'<span class="wbs-task-owner">'+t.owner+'</span>'
+      +(t.date ? '<span class="wbs-task-date">&#128197; '+t.date+'</span>' : '')
+      +'</div>'
+    ).join('');
+    card.innerHTML =
+      '<div class="ms-group-header" onclick="toggleWbsCard(\''+containerId+'\','+gi+')">'
+      +'<div><div class="ms-group-name">'+group.name+'</div>'
+      +'<div class="proj-card-dates">'+total+' task'+(total!==1?'s':'')+'</div></div>'
+      +'<div class="ms-group-chips">'+chips+'<span class="chevron" id="wchev-'+containerId+'-'+gi+'">&#9660;</span></div>'
+      +'</div>'
+      +'<div class="proj-progress-bar" style="margin:10px 0 6px">'+pbSegs+'</div>'
+      +'<div class="ms-group-body" id="wbsbody-'+containerId+'-'+gi+'">'+taskRows+'</div>';
+    container.appendChild(card);
+  });
+}
+
+function toggleWbsCard(cid, gi) {
+  const body = document.getElementById('wbsbody-'+cid+'-'+gi);
+  const chev = document.getElementById('wchev-'+cid+'-'+gi);
+  const card = document.getElementById('wbscard-'+cid+'-'+gi);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  card.classList.toggle('open', !isOpen);
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+/* ── TARGETED OFFER tab owner grid (duplicate of main, different IDs) ── */
+let activeToOwnerIdx = null;
+(function() {
+  const toSummary = document.getElementById('toSummary');
+  if (toSummary) {
+    const total = owners.reduce((s,o)=>s+o.total,0);
+    const overdue = owners.reduce((s,o)=>s+o.overdue,0);
+    const numOwners = owners.length;
+    toSummary.innerHTML = '<div class="metric-strip">'
+      +'<div class="metric-strip-item"><div class="metric-strip-val" style="color:var(--brand)">'+total+'</div><div class="metric-strip-lbl">Open Items</div></div>'
+      +'<div class="metric-strip-item"><div class="metric-strip-val" style="color:var(--green)">'+numOwners+'</div><div class="metric-strip-lbl">Owners</div></div>'
+      +'<div class="metric-strip-item"><div class="metric-strip-val" style="color:var(--red)">'+overdue+'</div><div class="metric-strip-lbl">Overdue</div></div>'
+      +'</div>';
+  }
+  const g = document.getElementById('toOwnerGrid');
+  if (!g) return;
+  owners.forEach((o, i) => {
+    const c = document.createElement('div');
+    c.className = 'owner-card'; c.id = 'tocard-' + i; c.onclick = () => toggleToOwner(i);
+    c.innerHTML = '<div class="status-bar ' + (o.overdue>0?'overdue':'ok') + '"></div>'
+      + '<div class="owner-top">'
+      + '<div class="owner-avatar" style="background:' + PALETTE[i%PALETTE.length] + '">' + initials(o.name) + '</div>'
+      + '<div class="owner-name-wrap"><div class="owner-name">' + o.name + '</div></div>'
+      + '<span class="chevron" id="tochev-' + i + '">&#9660;</span>'
+      + '</div>'
+      + '<div class="owner-stats">'
+      + '<div class="stat-box"><div class="num num-brand">' + o.total + '</div><div class="lbl">Total</div></div>'
+      + '<div class="stat-box"><div class="num ' + (o.overdue>0?'num-red':'num-green') + '">' + o.overdue + '</div><div class="lbl">Overdue</div></div>'
+      + '</div>'
+      + (o.overdue>0 ? '<div class="risk-pill">&#9888; ' + o.overdueDetail + '</div>' : '');
+    g.appendChild(c);
+  });
+})();
+
+function toggleToOwner(idx) {
+  const p = document.getElementById('toDetailPanel');
+  if (activeToOwnerIdx===idx) { closeToDetail(); return; }
+  if (activeToOwnerIdx!==null) document.getElementById('tocard-'+activeToOwnerIdx).classList.remove('active');
+  activeToOwnerIdx = idx; document.getElementById('tocard-'+idx).classList.add('active');
+  const o = owners[idx];
+  const av = document.getElementById('toDetailAvatar'); av.textContent = initials(o.name); av.style.background = PALETTE[idx%PALETTE.length];
+  document.getElementById('toDetailName').textContent = o.name;
+  document.getElementById('toDetailCount').textContent = o.total + ' action item' + (o.total!==1?'s':'') + (o.overdue>0?' · '+o.overdue+' overdue':'');
+  const list = document.getElementById('toDetailList'); list.innerHTML = '';
+  o.items.forEach((item, n) => {
+    const li = document.createElement('li');
+    const badge = item.od ? '<span class="overdue-badge">&#9888; OVERDUE</span>' : '';
+    li.innerHTML = '<div class="item-num ' + (item.od?'od':'') + '">' + (n+1) + '</div>'
+      + '<span><a class="item-link" href="' + SHEET_URL + '" target="_blank">' + item.t + '<span class="ss-icon">&#8599;</span></a>' + badge + '</span>';
+    list.appendChild(li);
+  });
+  p.classList.add('visible');
+  setTimeout(() => p.scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
+}
+function closeToDetail() {
+  if (activeToOwnerIdx!==null) document.getElementById('tocard-'+activeToOwnerIdx).classList.remove('active');
+  activeToOwnerIdx = null; document.getElementById('toDetailPanel').classList.remove('visible');
+}
+
+/* ── INIT WBS PAGES ── */
+renderWbsSummary(msConvData, 'msconvSummary');
+renderWbsGroups(msConvData, 'msconvGroups');
+renderWbsSummary(coWbsData, 'cowbsSummary');
+renderWbsGroups(coWbsData, 'cowbsGroups');
 </script>
 </body>
 </html>
 """
 
 # ─── HTML generation ──────────────────────────────────────────────────────────
-def generate_html(owners):
+def generate_html(owners, ms_conv_wbs, co_wbs):
     total_items   = sum(o["total"]   for o in owners)
     total_overdue = sum(o["overdue"] for o in owners)
     num_owners    = len(owners)
-    owners_json   = json.dumps(owners, ensure_ascii=True)
+    owners_json       = json.dumps(owners,       ensure_ascii=True)
+    ms_conv_wbs_json  = json.dumps(ms_conv_wbs,  ensure_ascii=True)
+    co_wbs_json       = json.dumps(co_wbs,       ensure_ascii=True)
 
     html = HTML_TEMPLATE
     html = html.replace("OWNERS_JSON_PLACEHOLDER",  owners_json)
+    html = html.replace("MS_CONV_WBS_PLACEHOLDER",  ms_conv_wbs_json)
+    html = html.replace("CO_WBS_PLACEHOLDER",       co_wbs_json)
     html = html.replace("LAST_SYNCED_PLACEHOLDER",  LAST_SYNCED)
     html = html.replace("TOTAL_ITEMS_PLACEHOLDER",  str(total_items))
     html = html.replace("NUM_OWNERS_PLACEHOLDER",   str(num_owners))
     html = html.replace("TOTAL_OVERDUE_PLACEHOLDER",str(total_overdue))
     html = html.replace("SHEET_URL_PLACEHOLDER",    SHEET_URL)
     html = html.replace("BINDER_URL_PLACEHOLDER",   BINDER_URL)
+    html = html.replace("MS_CONV_SS_URL_PLACEHOLDER", MS_CONV_SS_URL)
+    html = html.replace("CO_WBS_SS_URL_PLACEHOLDER",  CO_WBS_SS_URL)
     return html
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print("Fetching sheet from Smartsheet...")
+    print("Fetching RAID log from Smartsheet...")
     sheet = fetch_sheet()
     print(f"  Sheet: {sheet.get('name')}")
     print(f"  Total rows: {len(sheet.get('rows', []))}")
 
     owners = parse_owners(sheet)
-    print(f"Done. {len(owners)} owners, {sum(o['total'] for o in owners)} open items.")
+    print(f"  {len(owners)} owners, {sum(o['total'] for o in owners)} open items.")
 
-    html = generate_html(owners)
+    print("Fetching MS Convergence WBS...")
+    ms_conv_sheet = fetch_wbs(MS_CONV_SHEET_ID)
+    print(f"  Sheet: {ms_conv_sheet.get('name')}, rows: {len(ms_conv_sheet.get('rows',[]))}")
+    ms_conv_wbs = parse_wbs(ms_conv_sheet)
+    print(f"  Groups: {len(ms_conv_wbs['groups'])}, totals: {ms_conv_wbs['totals']}")
+
+    print("Fetching Change Order WBS...")
+    co_wbs_sheet = fetch_wbs(CO_WBS_SHEET_ID)
+    print(f"  Sheet: {co_wbs_sheet.get('name')}, rows: {len(co_wbs_sheet.get('rows',[]))}")
+    co_wbs = parse_wbs(co_wbs_sheet)
+    print(f"  Groups: {len(co_wbs['groups'])}, totals: {co_wbs['totals']}")
+
+    html = generate_html(owners, ms_conv_wbs, co_wbs)
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("Written -> index.html")
+    print("Done. Written -> index.html")
