@@ -173,12 +173,17 @@ def fetch_wbs(sheet_id, retries=4, backoff=5):
 
 # ─── Parse WBS sheet ──────────────────────────────────────────────────────────
 def parse_wbs(sheet):
+    """Parse WBS sheet into milestone groups.
+    Order-independent: groups tasks by bracket-extracted milestone name so the
+    result is correct whether the API returns rows in natural or alphabetical order.
+    """
     STATUS_NORM = {
         "Completed":     "completed",
         "In Progress":   "inProgress",
         "Not Started":   "notStarted",
         "Blocked":       "blocked",
         "Not Applicable":"notStarted",
+        "":              "notStarted",
     }
 
     col = {}
@@ -190,53 +195,75 @@ def parse_wbs(sheet):
     status_col  = col.get("Status")
     date_col    = col.get("Target Date")
 
-    groups = []
-    current_group = None
-    totals = {"completed": 0, "inProgress": 0, "notStarted": 0, "blocked": 0}
+    # Pass 1: collect section header names in sheet order, and bucket tasks by milestone
+    from collections import defaultdict
+    header_order = []   # milestone names in appearance order
+    task_map = defaultdict(list)  # milestone_name -> [task, ...]
 
     for row in sheet.get("rows", []):
         cells = {}
         for cell in row.get("cells", []):
             cells[cell.get("columnId")] = cell
 
-        primary_val = cell_text(cells.get(primary_col))
+        primary_val = cell_text(cells.get(primary_col)) if primary_col else ""
         if not primary_val:
             continue
-
-        # Skip plan headers starting with ▶
         if primary_val.startswith("▶"):
             continue
 
-        # New section header group (doesn't start with "[")
         if not primary_val.startswith("["):
-            if current_group and current_group["tasks"]:
-                groups.append(current_group)
-            current_group = {"name": primary_val, "tasks": [], "counts": {"completed": 0, "inProgress": 0, "notStarted": 0, "blocked": 0}}
-            continue
-
-        # Task row starts with "["
-        if current_group is None:
-            continue
-
-        # Extract [MilestoneName] task_description
-        bracket_end = primary_val.find("]")
-        if bracket_end == -1:
-            task_desc = primary_val
+            # Section header row
+            if primary_val not in header_order:
+                header_order.append(primary_val)
         else:
-            task_desc = primary_val[bracket_end + 1:].strip()
+            # Task row — extract milestone name from [MilestoneName] prefix
+            bracket_end = primary_val.find("]")
+            if bracket_end == -1:
+                ms_name   = primary_val
+                task_desc = primary_val
+            else:
+                ms_name   = primary_val[1:bracket_end].strip()
+                task_desc = primary_val[bracket_end + 1:].strip()
 
-        owner  = cell_text(cells.get(owner_col))
-        status_raw = cell_text(cells.get(status_col))
-        status = STATUS_NORM.get(status_raw, "notStarted")
-        date   = cell_text(cells.get(date_col))
+            owner      = cell_text(cells.get(owner_col))  if owner_col  else ""
+            status_raw = cell_text(cells.get(status_col)) if status_col else ""
+            status     = STATUS_NORM.get(status_raw, "notStarted")
+            date_val   = cell_text(cells.get(date_col))   if date_col   else ""
 
-        task = {"task": task_desc, "owner": owner, "status": status, "date": date}
-        current_group["tasks"].append(task)
-        current_group["counts"][status] = current_group["counts"].get(status, 0) + 1
-        totals[status] = totals.get(status, 0) + 1
+            task_map[ms_name].append({
+                "task": safe_str(task_desc),
+                "owner": safe_str(owner),
+                "status": status,
+                "date": safe_str(date_val),
+            })
 
-    if current_group and current_group["tasks"]:
-        groups.append(current_group)
+    # Pass 2: assemble groups in header order; append any orphan groups last
+    seen = set()
+    groups = []
+    totals = {"completed": 0, "inProgress": 0, "notStarted": 0, "blocked": 0}
+
+    for name in header_order:
+        if name in seen:
+            continue
+        seen.add(name)
+        tasks = task_map.get(name, [])
+        if not tasks:
+            continue
+        counts = {"completed": 0, "inProgress": 0, "notStarted": 0, "blocked": 0}
+        for t in tasks:
+            counts[t["status"]] = counts.get(t["status"], 0) + 1
+            totals[t["status"]] = totals.get(t["status"], 0) + 1
+        groups.append({"name": name, "tasks": tasks, "counts": counts})
+
+    # Orphan tasks whose header wasn't in the sheet
+    for ms_name, tasks in task_map.items():
+        if ms_name in seen:
+            continue
+        counts = {"completed": 0, "inProgress": 0, "notStarted": 0, "blocked": 0}
+        for t in tasks:
+            counts[t["status"]] = counts.get(t["status"], 0) + 1
+            totals[t["status"]] = totals.get(t["status"], 0) + 1
+        groups.append({"name": ms_name, "tasks": tasks, "counts": counts})
 
     return {"groups": groups, "totals": totals}
 
