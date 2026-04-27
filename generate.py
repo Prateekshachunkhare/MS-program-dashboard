@@ -22,8 +22,10 @@ BINDER_URL  = "https://docs.google.com/spreadsheets/d/1ThmYPfgTH_zhlmuJr63H47Uzo
 
 MS_CONV_SHEET_ID = "905349279207300"
 CO_WBS_SHEET_ID  = "3526224222572420"
+TO2_WBS_SHEET_ID = "1050750565175172"
 MS_CONV_SS_URL   = "https://app.smartsheet.com/sheets/WcJRFcqhF6qJR8fHWMjJ5Jx99q8qrCvxFFg3Pc41"
 CO_WBS_SS_URL    = "https://app.smartsheet.com/sheets/vp5r93RjCf9QvVPw38mJM627Xg66gVPpFwR97Rh1"
+TO2_WBS_SS_URL   = "https://app.smartsheet.com/sheets/2XXc2wmM2p3jWQG8fQwmQ54rHMvJmM7q4VjHG5f1"
 
 INCLUDE_TYPES = {"Action Item", "Risk"}
 
@@ -266,6 +268,79 @@ def parse_wbs(sheet):
         groups.append({"name": ms_name, "tasks": tasks, "counts": counts})
 
     return {"groups": groups, "totals": totals}
+
+# ─── Parse TO2 WBS (WBS-ID hierarchy, not bracket-prefix format) ─────────────
+def parse_to2_wbs(sheet):
+    """
+    TO2 sheet uses WBS ID column to define hierarchy:
+      x.y   → group (phase/milestone header)
+      x.y.z → task (child of that group)
+    """
+    import re
+    STATUS_NORM = {
+        "Completed":   "completed",
+        "In Progress": "inProgress",
+        "Not Started": "notStarted",
+        "Blocked":     "blocked",
+        "":            "notStarted",
+    }
+    GROUP_RE = re.compile(r'^\d+\.\d+$')
+    TASK_RE  = re.compile(r'^\d+\.\d+\.\d+')
+
+    col = {}
+    for c in sheet.get("columns", []):
+        col[c["title"].strip()] = c["id"]
+    task_col   = col.get("Task Name")
+    wbs_col    = col.get("WBS ID")
+    owner_col  = col.get("Assigned To")
+    status_col = col.get("Status")
+    date_col   = col.get("End Date")
+
+    groups = {}
+    group_order = []
+
+    for row in sheet.get("rows", []):
+        cells = {}
+        for cell in row.get("cells", []):
+            cells[cell.get("columnId")] = cell
+        task_name  = cell_text(cells.get(task_col))   if task_col   else ""
+        wbs_id     = cell_text(cells.get(wbs_col))    if wbs_col    else ""
+        owner      = cell_text(cells.get(owner_col))  if owner_col  else ""
+        status_raw = cell_text(cells.get(status_col)) if status_col else ""
+        status     = STATUS_NORM.get(status_raw, "notStarted")
+        date_val   = cell_text(cells.get(date_col))   if date_col   else ""
+        if not task_name:
+            continue
+        if wbs_id and GROUP_RE.match(wbs_id):
+            if wbs_id not in groups:
+                groups[wbs_id] = {"name": safe_str(task_name), "owner": safe_str(owner),
+                                  "status": status, "date": safe_str(date_val),
+                                  "tasks": [], "counts": {"completed":0,"inProgress":0,"notStarted":0,"blocked":0}}
+                group_order.append(wbs_id)
+        elif wbs_id and TASK_RE.match(wbs_id):
+            parent_key = ".".join(wbs_id.split(".")[:2])
+            if parent_key in groups:
+                groups[parent_key]["tasks"].append({
+                    "task": safe_str(task_name), "owner": safe_str(owner),
+                    "status": status, "date": safe_str(date_val),
+                })
+
+    def _wbs_key(k):
+        p = k.split(".")
+        return (int(p[0]), int(p[1]))
+
+    result_groups = []
+    totals = {"completed":0, "inProgress":0, "notStarted":0, "blocked":0}
+    for gk in sorted(group_order, key=_wbs_key):
+        g = groups[gk]
+        if not g["tasks"]:
+            g["tasks"] = [{"task": g["name"], "owner": g["owner"], "status": g["status"], "date": g["date"]}]
+        for t in g["tasks"]:
+            g["counts"][t["status"]] = g["counts"].get(t["status"], 0) + 1
+            totals[t["status"]]      = totals.get(t["status"], 0) + 1
+        result_groups.append({"name": g["name"], "tasks": g["tasks"], "counts": g["counts"]})
+
+    return {"groups": result_groups, "totals": totals}
 
 # ─── HTML template ────────────────────────────────────────────────────────────
 HTML_TEMPLATE = """\
@@ -512,12 +587,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="section-label">&#128197; Release Calendar</div>
   <div class="rel-tiles">
     <div class="rel-tile">
-      <div class="rel-tile-icon">&#128203;</div>
-      <div><div class="rel-tile-val" style="color:#4f46e5">3</div><div class="rel-tile-lbl">Active Tracks</div></div>
-    </div>
-    <div class="rel-tile">
       <div class="rel-tile-icon">&#127919;</div>
       <div><div class="rel-tile-val" style="color:#10b981">May 11</div><div class="rel-tile-lbl">MS Conv Go-Live</div></div>
+    </div>
+    <div class="rel-tile">
+      <div class="rel-tile-icon">&#127775;</div>
+      <div><div class="rel-tile-val" style="color:#be185d">May 29</div><div class="rel-tile-lbl">TO2 Launch</div></div>
     </div>
     <div class="rel-tile">
       <div class="rel-tile-icon">&#127937;</div>
@@ -643,21 +718,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="page-header">
     <div class="header-left">
       <h1>Marketing Studio &middot; Targeted Offer 2.0</h1>
-      <div class="sub">RAID Log WBS View &middot; Live from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
+      <div class="sub">Q2 2026 &middot; Live from Smartsheet &middot; LAST_SYNCED_PLACEHOLDER</div>
     </div>
-    <a class="ext-link" href="SHEET_URL_PLACEHOLDER" target="_blank">&#8599; Open RAID Log</a>
+    <a class="ext-link" href="TO2_WBS_SS_URL_PLACEHOLDER" target="_blank">&#8599; Open WBS</a>
   </div>
   <div class="wbs-summary" id="toSummary"></div>
   <div id="toGroups" style="margin-top:16px"></div>
-  <div class="footer">Auto-refreshed from Smartsheet &middot; Last sync: LAST_SYNCED_PLACEHOLDER</div>
 </div>
 
 <script>
 const SHEET_URL = 'SHEET_URL_PLACEHOLDER';
 const MS_CONV_SS_URL = 'MS_CONV_SS_URL_PLACEHOLDER';
 const CO_WBS_SS_URL  = 'CO_WBS_SS_URL_PLACEHOLDER';
-const msConvData = MS_CONV_WBS_PLACEHOLDER;
-const coWbsData  = CO_WBS_PLACEHOLDER;
+const msConvData  = MS_CONV_WBS_PLACEHOLDER;
+const coWbsData   = CO_WBS_PLACEHOLDER;
+const to2WbsData  = TO2_WBS_PLACEHOLDER;
 
 function showTab(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1129,55 +1204,42 @@ function toggleWbsCard(cid, gi) {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
-/* ── TARGETED OFFER tab — WBS view built from RAID log items ── */
-const toWbsData = (function() {
-  var groups = [], totals = {completed:0, inProgress:0, notStarted:0, blocked:0};
-  owners.forEach(function(o) {
-    if (!o.items || !o.items.length) return;
-    var tasks = o.items.map(function(item) {
-      var s = item.od ? 'blocked' : 'inProgress';
-      return {task: item.t, owner: o.name, status: s, date: item.od ? o.overdueDetail : ''};
-    });
-    var counts = {completed:0, inProgress:0, notStarted:0, blocked:0};
-    tasks.forEach(function(t) { counts[t.status]++; totals[t.status]++; });
-    groups.push({name: o.name, tasks: tasks, counts: counts});
-  });
-  return {groups: groups, totals: totals};
-})();
-
 /* ── INIT WBS PAGES ── */
 renderWbsSummary(msConvData, 'msconvSummary');
 renderWbsGroups(msConvData, 'msconvGroups');
 renderWbsSummary(coWbsData, 'cowbsSummary');
 renderWbsGroups(coWbsData, 'cowbsGroups');
-renderWbsSummary(toWbsData, 'toSummary');
-renderWbsGroups(toWbsData, 'toGroups');
+renderWbsSummary(to2WbsData, 'toSummary');
+renderWbsGroups(to2WbsData, 'toGroups');
 </script>
 </body>
 </html>
 """
 
 # ─── HTML generation ──────────────────────────────────────────────────────────
-def generate_html(owners, ms_conv_wbs, co_wbs):
+def generate_html(owners, ms_conv_wbs, co_wbs, to2_wbs):
     total_items   = sum(o["total"]   for o in owners)
     total_overdue = sum(o["overdue"] for o in owners)
     num_owners    = len(owners)
     owners_json       = json.dumps(owners,       ensure_ascii=True)
     ms_conv_wbs_json  = json.dumps(ms_conv_wbs,  ensure_ascii=True)
     co_wbs_json       = json.dumps(co_wbs,       ensure_ascii=True)
+    to2_wbs_json      = json.dumps(to2_wbs,      ensure_ascii=True)
 
     html = HTML_TEMPLATE
-    html = html.replace("OWNERS_JSON_PLACEHOLDER",  owners_json)
-    html = html.replace("MS_CONV_WBS_PLACEHOLDER",  ms_conv_wbs_json)
-    html = html.replace("CO_WBS_PLACEHOLDER",       co_wbs_json)
-    html = html.replace("LAST_SYNCED_PLACEHOLDER",  LAST_SYNCED)
-    html = html.replace("TOTAL_ITEMS_PLACEHOLDER",  str(total_items))
-    html = html.replace("NUM_OWNERS_PLACEHOLDER",   str(num_owners))
-    html = html.replace("TOTAL_OVERDUE_PLACEHOLDER",str(total_overdue))
-    html = html.replace("SHEET_URL_PLACEHOLDER",    SHEET_URL)
-    html = html.replace("BINDER_URL_PLACEHOLDER",   BINDER_URL)
+    html = html.replace("OWNERS_JSON_PLACEHOLDER",    owners_json)
+    html = html.replace("MS_CONV_WBS_PLACEHOLDER",    ms_conv_wbs_json)
+    html = html.replace("CO_WBS_PLACEHOLDER",         co_wbs_json)
+    html = html.replace("TO2_WBS_PLACEHOLDER",        to2_wbs_json)
+    html = html.replace("LAST_SYNCED_PLACEHOLDER",    LAST_SYNCED)
+    html = html.replace("TOTAL_ITEMS_PLACEHOLDER",    str(total_items))
+    html = html.replace("NUM_OWNERS_PLACEHOLDER",     str(num_owners))
+    html = html.replace("TOTAL_OVERDUE_PLACEHOLDER",  str(total_overdue))
+    html = html.replace("SHEET_URL_PLACEHOLDER",      SHEET_URL)
+    html = html.replace("BINDER_URL_PLACEHOLDER",     BINDER_URL)
     html = html.replace("MS_CONV_SS_URL_PLACEHOLDER", MS_CONV_SS_URL)
     html = html.replace("CO_WBS_SS_URL_PLACEHOLDER",  CO_WBS_SS_URL)
+    html = html.replace("TO2_WBS_SS_URL_PLACEHOLDER", TO2_WBS_SS_URL)
     return html
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -1202,7 +1264,13 @@ if __name__ == "__main__":
     co_wbs = parse_wbs(co_wbs_sheet)
     print(f"  Groups: {len(co_wbs['groups'])}, totals: {co_wbs['totals']}")
 
-    html = generate_html(owners, ms_conv_wbs, co_wbs)
+    print("Fetching Targeted Offer 2.0 WBS...")
+    to2_wbs_sheet = fetch_wbs(TO2_WBS_SHEET_ID)
+    print(f"  Sheet: {to2_wbs_sheet.get('name')}, rows: {len(to2_wbs_sheet.get('rows',[]))}")
+    to2_wbs = parse_to2_wbs(to2_wbs_sheet)
+    print(f"  Groups: {len(to2_wbs['groups'])}, totals: {to2_wbs['totals']}")
+
+    html = generate_html(owners, ms_conv_wbs, co_wbs, to2_wbs)
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("Done. Written -> index.html")
