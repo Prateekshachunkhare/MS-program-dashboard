@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marketing Studio &middot; Program Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"
-  integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi"
-  crossorigin="anonymous"></script>
 <style>
 :root {
   --brand:#4f46e5; --brand-light:#ede9fe; --brand-mid:#c7d2fe;
@@ -20,8 +17,8 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:20px 20px 60px;min-height:100vh}
-.tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border)}
-.tab{padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px 8px 0 0;color:var(--gray);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s}
+.tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);flex-wrap:wrap}
+.tab{padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;border-radius:8px 8px 0 0;color:var(--gray);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap}
 .tab:hover{color:var(--brand)}
 .tab.active{color:var(--brand);border-bottom-color:var(--brand);background:var(--brand-light)}
 .page{display:none}.page.active{display:block}
@@ -155,6 +152,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .track-co1{background:#ecfdf5;color:#065f46}
 .track-co2{background:#fff7ed;color:#9a3412}
 .footer{font-size:10.5px;color:#d1d5db;text-align:right;margin-top:14px}
+.blank-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:340px;text-align:center;gap:14px;color:var(--gray)}
+.blank-page-icon{font-size:48px;opacity:.35}
+.blank-page-title{font-size:16px;font-weight:700;color:var(--text-2)}
+.blank-page-sub{font-size:12.5px;color:var(--gray);max-width:320px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -162,6 +163,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="tab-bar">
   <button class="tab active" onclick="showTab('main')">&#128202; MS Dashboard</button>
   <button class="tab" onclick="showTab('release')">&#128197; Release Calendar</button>
+  <button class="tab" onclick="showTab('msconv')">&#128260; MS Convergence</button>
+  <button class="tab" onclick="showTab('co1')">&#128994; Change Order Ph 1</button>
+  <button class="tab" onclick="showTab('co2')">&#128993; Change Order Ph 2</button>
+  <button class="tab" onclick="showTab('to2')">&#127919; Targeted Offer 2.0</button>
 </div>
 
 <!-- PAGE 1: MS DASHBOARD -->
@@ -169,7 +174,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="page-header">
     <div class="header-left">
       <h1>Marketing Studio &middot; MS Dashboard</h1>
-      <div class="sub">Targeted Offer Program &middot; RAID Log &middot; Auto-refreshed from Smartsheet &middot; April 26, 2026</div>
+      <div class="sub">Targeted Offer Program &middot; RAID Log &middot; Auto-refreshed from Smartsheet &middot; April 27, 2026</div>
     </div>
     <a class="ext-link" href="https://app.smartsheet.com/sheets/3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1?view=grid" target="_blank">&#8599; Open RAID Log</a>
   </div>
@@ -194,22 +199,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
 
-  <div class="rel-two-col">
-    <div class="chart-card">
-      <h3>Overall Milestone Status</h3>
-      <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
-      <div class="status-legend">
-        <div class="s-chip s-done"><div class="s-chip-dot" style="background:#10b981"></div>Completed &middot; 1</div>
-        <div class="s-chip s-prog"><div class="s-chip-dot" style="background:#f59e0b"></div>In Progress &middot; 4</div>
-        <div class="s-chip s-ns"><div class="s-chip-dot" style="background:#6366f1"></div>Not Started &middot; 14</div>
-        <div class="s-chip s-block"><div class="s-chip-dot" style="background:#ef4444"></div>Blocked &middot; 1</div>
-      </div>
-    </div>
-    <div>
-      <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
-      <div id="projCards"></div>
-    </div>
-  </div>
+  <div class="section-title" style="margin-bottom:10px">Track Breakdown &mdash; click to drill down</div>
+  <div id="projCards" style="margin-bottom:20px"></div>
 
   <div class="proj-detail" id="projDetail">
     <div class="proj-detail-header">
@@ -223,14 +214,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
   <div class="section-label">&#128203; RAID Log</div>
   <div class="summary-row">
-    <div class="summary-card"><div class="val val-brand">34</div><div class="lbl">Open Items</div></div>
-    <div class="summary-card"><div class="val val-green">13</div><div class="lbl">Owners</div></div>
+    <div class="summary-card"><div class="val val-brand">35</div><div class="lbl">Open Items</div></div>
+    <div class="summary-card"><div class="val val-green">14</div><div class="lbl">Owners</div></div>
     <div class="summary-card"><div class="val val-red">16</div><div class="lbl">Overdue</div></div>
-  </div>
-
-  <div class="chart-card" style="max-width:520px;margin-bottom:24px">
-    <h3>Items by Owner</h3>
-    <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
   </div>
 
   <div class="section-title">Owner Breakdown &mdash; click a card to drill down</div>
@@ -248,7 +234,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <ul class="item-list" id="detailList"></ul>
   </div>
 
-  <div class="footer">Auto-refreshed from Smartsheet &middot; Last sync: April 26, 2026</div>
+  <div class="footer">Auto-refreshed from Smartsheet &middot; Last sync: April 27, 2026</div>
 </div>
 
 <!-- PAGE 2: RELEASE CALENDAR -->
@@ -289,7 +275,67 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <tbody id="milestoneTable"></tbody>
     </table>
   </div>
-  <div class="footer">Source: Marketing Studio Program Binder &middot; Last updated April 26, 2026</div>
+  <div class="footer">Source: Marketing Studio Program Binder &middot; Last updated April 27, 2026</div>
+</div>
+
+<!-- PAGE 3: MS CONVERGENCE -->
+<div id="page-msconv" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; MS Convergence</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#128260;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the MS Convergence program view will be added here.</div>
+  </div>
+</div>
+
+<!-- PAGE 4: CHANGE ORDER PH 1 -->
+<div id="page-co1" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; Change Order Ph 1</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#128994;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the Change Order Phase 1 program view will be added here.</div>
+  </div>
+</div>
+
+<!-- PAGE 5: CHANGE ORDER PH 2 -->
+<div id="page-co2" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; Change Order Ph 2</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#128993;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the Change Order Phase 2 program view will be added here.</div>
+  </div>
+</div>
+
+<!-- PAGE 6: TARGETED OFFER 2.0 -->
+<div id="page-to2" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; Targeted Offer 2.0</h1>
+      <div class="sub">Q2 2026</div>
+    </div>
+  </div>
+  <div class="blank-page">
+    <div class="blank-page-icon">&#127919;</div>
+    <div class="blank-page-title">Coming Soon</div>
+    <div class="blank-page-sub">Content for the Targeted Offer 2.0 program view will be added here.</div>
+  </div>
 </div>
 
 <script>
@@ -304,27 +350,9 @@ function showTab(id) {
 
 /* ── ACTION ITEMS ── */
 const PALETTE = ['#4f46e5','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#be185d','#6366f1','#0e7490','#7e22ce','#b45309'];
-const owners = [{"name": "Priyank Bansal", "total": 8, "overdue": 3, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Conduct 30-minute review session with marketing operations team to ensure the new system does not replicate existing bulk edit issues from Campaign Manager", "rowId": "5997309254500228"}, {"t": "Ask Rihanna to add Maria and Sujata to weekly Fallow meeting; expand meeting to 1 hour", "rowId": "3004010180706180"}, {"t": "Slack Ali the full list of 7 MCPs and their respective owners (Lalitha, Abirami, Gaurav Mishra, Pun, etc.)", "rowId": "2722535203995524", "od": true}, {"t": "Forward Monday product review invite to Prateeksha and Nisarg", "rowId": "3848435110838148", "od": true}, {"t": "Clarify Pricing JSON status with Deepak Yadav at tomorrow's meeting", "rowId": "8352034738208644", "od": true}, {"t": "Explore earlier UAT start if dev is done by 5/15", "rowId": "3519456332021636"}, {"t": "Host 30-min MS Convergence demo", "rowId": "8023055959392132"}, {"t": "Follow up with Steve on Taxonomy workstream", "rowId": "1830606471757700"}]}, {"name": "Bharatkumar .", "total": 5, "overdue": 0, "overdueDetail": "", "items": [{"t": "Share convergence document as pre-read to stakeholders; ensure it clearly explains what to expect and is aligned with PM sign-off before distribution", "rowId": "1775184603840388"}, {"t": "Work with users to list all UAT scenarios and test cases (including prompt and use case permutations) for Change Orders; document for both testing and UAT", "rowId": "6278784231210884"}, {"t": "Share user guide / PR FAQ with example prompts and suggestions for users during the testing phase", "rowId": "8530584044896132"}, {"t": "Be available for follow-up calls with Neeraj (and others) to address further questions on UI/UX for bulk and content edits", "rowId": "367809720287108"}, {"t": "Partner with users to document end-to-end UAT scenarios in parallel with development; ensure all user experience permutations are covered with no surprises during testing", "rowId": "4871409347657604"}]}, {"name": "Prateeksha Chunkhare", "total": 4, "overdue": 4, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Add Shika to the Change Orders meeting to capture Maria's fast-follow requirements", "rowId": "1878110273863556", "od": true}, {"t": "Confirm with Poon that the change order solution pre-read is sent out by Friday for Monday's product review", "rowId": "4129910087548804", "od": true}, {"t": "Prepare status update for tomorrow's Fallow meeting covering Targeted Offer + Change Orders", "rowId": "8633509714919300", "od": true}, {"t": "Add two ops debt line items to the Fallow deck (WebOps and homes/pricing ops)", "rowId": "470735390310276", "od": true}]}, {"name": "Ali Navvab-Safavi", "total": 3, "overdue": 3, "overdueDetail": "Due Apr 24 passed", "items": [{"t": "Review IXP MCP work and create a WBS template; share with Poon and all 7 MCP owners with July 15 as target date", "rowId": "4974335017680772", "od": true}, {"t": "Confirm RoW country mapping in SFDC Wholesale Offers", "rowId": "704706564915076", "od": true}, {"t": "Share SFDC Wholesale Offers delivery timeline", "rowId": "5208306192285572", "od": true}]}, {"name": "Nisarg Trivedi", "total": 3, "overdue": 3, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Attend daily convergence war room; find secondary working contact beyond Gaurav (suggest Rohit)", "rowId": "7226134831366020", "od": true}, {"t": "Follow up with Gokul on XD design spec (due April 23, no response received)", "rowId": "1596635297152900", "od": true}, {"t": "Check with Bharat/John whether Janice is aligned on the 5-day UAT timeline; flag as risk if not", "rowId": "6100234924523396", "od": true}]}, {"name": "Atul Joshi", "total": 2, "overdue": 0, "overdueDetail": "", "items": [{"t": "Create and share a refined mock/working version of the new widget/publishing experience in Marketing Studio (widgets instead of Campaign Manager URLs); socialize with stakeholders once ready", "rowId": "7404684138053508"}, {"t": "XD visual design/ IDS Component theme update", "rowId": "36885036072836"}]}, {"name": "Bharatkumar", "total": 2, "overdue": 1, "overdueDetail": "Due Apr 25 passed", "items": [{"t": "Develop UAT test cases for Change Orders", "rowId": "5771256145706884", "od": true}, {"t": "Revisit Targeted Offers items 3 & 4 post 30/60/90 milestones", "rowId": "7460106005970820"}]}, {"name": "Gaurav Misra", "total": 2, "overdue": 0, "overdueDetail": "", "items": [{"t": "IDS Component Migration", "rowId": "915408286187396"}, {"t": "Taxonomy", "rowId": "5419007913557892"}]}, {"name": "Neeraj Gang", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Complete plan to cover all permutations of attribute changes in the UI within the next 10 days of coding; ensure all in-scope change order scenarios are supported and testable", "rowId": "4026984417525636"}]}, {"name": "Rajat Khare", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Review and consider long-term value and maintenance overhead of current UI/UX approach vs. agent-driven, draft-first workflow; revisit experience design if productivity/velocity gains are not substantial", "rowId": "7123209161342852"}]}, {"name": "Full Team", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Review list of known issues from previous bulk edit implementations in Campaign Manager to ensure those concerns are addressed in the new Change Orders feature", "rowId": "1493709627129732"}]}, {"name": "Riana Katz", "total": 1, "overdue": 1, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Join Insights Repository meeting with Bharat", "rowId": "6334206099128196", "od": true}]}, {"name": "Suramya Gupta", "total": 1, "overdue": 1, "overdueDetail": "Due Apr 24 passed", "items": [{"t": "Set up call with Riana Katz on Mailchimp context ingestion testing", "rowId": "4082406285442948", "od": true}]}];
+const owners = [{"name": "Priyank Bansal", "total": 8, "overdue": 3, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Conduct 30-minute review session with marketing operations team to ensure the new system does not replicate existing bulk edit issues from Campaign Manager", "rowId": "5997309254500228"}, {"t": "Ask Rihanna to add Maria and Sujata to weekly Fallow meeting; expand meeting to 1 hour", "rowId": "3004010180706180"}, {"t": "Slack Ali the full list of 7 MCPs and their respective owners (Lalitha, Abirami, Gaurav Mishra, Pun, etc.)", "rowId": "2722535203995524", "od": true}, {"t": "Forward Monday product review invite to Prateeksha and Nisarg", "rowId": "3848435110838148", "od": true}, {"t": "Clarify Pricing JSON status with Deepak Yadav at tomorrow's meeting", "rowId": "8352034738208644", "od": true}, {"t": "Explore earlier UAT start if dev is done by 5/15", "rowId": "3519456332021636"}, {"t": "Host 30-min MS Convergence demo", "rowId": "8023055959392132"}, {"t": "Follow up with Steve on Taxonomy workstream", "rowId": "1830606471757700"}]}, {"name": "Bharatkumar .", "total": 5, "overdue": 0, "overdueDetail": "", "items": [{"t": "Share convergence document as pre-read to stakeholders; ensure it clearly explains what to expect and is aligned with PM sign-off before distribution", "rowId": "1775184603840388"}, {"t": "Work with users to list all UAT scenarios and test cases (including prompt and use case permutations) for Change Orders; document for both testing and UAT", "rowId": "6278784231210884"}, {"t": "Share user guide / PR FAQ with example prompts and suggestions for users during the testing phase", "rowId": "8530584044896132"}, {"t": "Be available for follow-up calls with Neeraj (and others) to address further questions on UI/UX for bulk and content edits", "rowId": "367809720287108"}, {"t": "Partner with users to document end-to-end UAT scenarios in parallel with development; ensure all user experience permutations are covered with no surprises during testing", "rowId": "4871409347657604"}]}, {"name": "Prateeksha Chunkhare", "total": 4, "overdue": 4, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Add Shika to the Change Orders meeting to capture Maria's fast-follow requirements", "rowId": "1878110273863556", "od": true}, {"t": "Confirm with Poon that the change order solution pre-read is sent out by Friday for Monday's product review", "rowId": "4129910087548804", "od": true}, {"t": "Prepare status update for tomorrow's Fallow meeting covering Targeted Offer + Change Orders", "rowId": "8633509714919300", "od": true}, {"t": "Add two ops debt line items to the Fallow deck (WebOps and homes/pricing ops)", "rowId": "470735390310276", "od": true}]}, {"name": "Ali Navvab-Safavi", "total": 3, "overdue": 3, "overdueDetail": "Due Apr 24 passed", "items": [{"t": "Review IXP MCP work and create a WBS template; share with Poon and all 7 MCP owners with July 15 as target date", "rowId": "4974335017680772", "od": true}, {"t": "Confirm RoW country mapping in SFDC Wholesale Offers", "rowId": "704706564915076", "od": true}, {"t": "Share SFDC Wholesale Offers delivery timeline", "rowId": "5208306192285572", "od": true}]}, {"name": "Nisarg Trivedi", "total": 3, "overdue": 3, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Attend daily convergence war room; find secondary working contact beyond Gaurav (suggest Rohit)", "rowId": "7226134831366020", "od": true}, {"t": "Follow up with Gokul on XD design spec (due April 23, no response received)", "rowId": "1596635297152900", "od": true}, {"t": "Check with Bharat/John whether Janice is aligned on the 5-day UAT timeline; flag as risk if not", "rowId": "6100234924523396", "od": true}]}, {"name": "Atul Joshi", "total": 2, "overdue": 0, "overdueDetail": "", "items": [{"t": "Create and share a refined mock/working version of the new widget/publishing experience in Marketing Studio (widgets instead of Campaign Manager URLs); socialize with stakeholders once ready", "rowId": "7404684138053508"}, {"t": "XD visual design/ IDS Component theme update", "rowId": "36885036072836"}]}, {"name": "Bharatkumar", "total": 2, "overdue": 1, "overdueDetail": "Due Apr 25 passed", "items": [{"t": "Develop UAT test cases for Change Orders", "rowId": "5771256145706884", "od": true}, {"t": "Revisit Targeted Offers items 3 & 4 post 30/60/90 milestones", "rowId": "7460106005970820"}]}, {"name": "Gaurav Misra", "total": 2, "overdue": 0, "overdueDetail": "", "items": [{"t": "IDS Component Migration", "rowId": "915408286187396"}, {"t": "Taxonomy", "rowId": "5419007913557892"}]}, {"name": "Neeraj Gang", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Complete plan to cover all permutations of attribute changes in the UI within the next 10 days of coding; ensure all in-scope change order scenarios are supported and testable", "rowId": "4026984417525636"}]}, {"name": "Rajat Khare", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Review and consider long-term value and maintenance overhead of current UI/UX approach vs. agent-driven, draft-first workflow; revisit experience design if productivity/velocity gains are not substantial", "rowId": "7123209161342852"}]}, {"name": "Full Team", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Review list of known issues from previous bulk edit implementations in Campaign Manager to ensure those concerns are addressed in the new Change Orders feature", "rowId": "1493709627129732"}]}, {"name": "Riana Katz", "total": 1, "overdue": 1, "overdueDetail": "Due Apr 23 passed", "items": [{"t": "Join Insights Repository meeting with Bharat", "rowId": "6334206099128196", "od": true}]}, {"name": "Suramya Gupta", "total": 1, "overdue": 1, "overdueDetail": "Due Apr 24 passed", "items": [{"t": "Set up call with Riana Katz on Mailchimp context ingestion testing", "rowId": "4082406285442948", "od": true}]}, {"name": "Gokul Sarangapani", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Gokul to provide the week-over-week bug-fix plan and the week-over-week stability improvement projections for Marketing Studio.", "rowId": "4757722498662276"}]}];
 
 function initials(n) { return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
-
-(function() {
-  const dc = document.getElementById('donutChart').getContext('2d');
-  new Chart(dc, {
-    type: 'doughnut',
-    data: {
-      labels: owners.map(o => o.name.split(' ')[0]),
-      datasets: [{ data: owners.map(o => o.total), backgroundColor: PALETTE, borderColor: '#fff', borderWidth: 3, hoverOffset: 8 }]
-    },
-    options: {
-      cutout: '62%',
-      plugins: {
-        legend: { position: 'right', labels: { font:{size:10}, color:'#374151', boxWidth:11, padding:9 }},
-        tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + c.parsed + ' items' }}
-      }
-    }
-  });
-})();
 
 let activeOwnerIdx = null;
 (function() {
@@ -373,24 +401,6 @@ function closeDetail() {
 }
 
 /* ── RELEASE CALENDAR ── */
-(function() {
-  const sc = document.getElementById('statusChart').getContext('2d');
-  new Chart(sc, {
-    type: 'doughnut',
-    data: {
-      labels: ['Completed','In Progress','Not Started','Blocked'],
-      datasets: [{ data: [1,4,14,1], backgroundColor: ['#10b981','#f59e0b','#6366f1','#ef4444'], borderColor: '#fff', borderWidth: 3, hoverOffset: 8 }]
-    },
-    options: {
-      cutout: '60%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + c.parsed + ' milestones' }}
-      }
-    }
-  });
-})();
-
 const projects = [
   {
     id:'conv', name:'MS Convergence', dates:'Apr 3 – May 29, 2026',
