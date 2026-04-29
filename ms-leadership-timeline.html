@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Studio — Leadership View</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+    .header-left h1 { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+    .header-left p { font-size: 13px; color: #666; margin-top: 3px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 20px; letter-spacing: .02em; }
+    .badge-on-track  { background: #e8f5e9; color: #2d7d32; }
+    .badge-at-risk   { background: #fff3e0; color: #e65100; }
+    .badge-blocked   { background: #ffebee; color: #c62828; }
+
+    /* Section */
+    .section { background: #fff; border: 1px solid #e8e8e6; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+    .section-header { padding: 14px 20px; border-bottom: 1px solid #f0f0ee; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; }
+
+    /* Track table */
+    .track-row { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #f5f5f3; }
+    .track-row:last-child { border-bottom: none; }
+    .track-name { width: 175px; flex-shrink: 0; }
+    .track-name strong { font-size: 13px; font-weight: 600; display: block; }
+    .track-name span { font-size: 11px; color: #888; }
+    .progress-wrap { flex: 1; display: flex; align-items: center; gap: 10px; }
+    .bar { height: 6px; border-radius: 3px; background: #eee; flex: 1; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .bar-pct { font-size: 12px; color: #666; min-width: 30px; text-align: right; }
+    .milestone-info { width: 175px; flex-shrink: 0; font-size: 12px; color: #444; }
+    .milestone-info.urgent { color: #c62828; font-weight: 600; }
+    .owner-info { width: 120px; flex-shrink: 0; font-size: 12px; color: #888; }
+
+    /* Blockers */
+    .blocker-row { display: flex; align-items: flex-start; gap: 12px; padding: 11px 20px; border-bottom: 1px solid #f5f5f3; }
+    .blocker-row:last-child { border-bottom: none; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .dot-critical { background: #c62828; }
+    .dot-warning  { background: #e65100; }
+    .blocker-title { font-size: 13px; color: #1a1a1a; flex: 1; }
+    .blocker-owner { font-size: 12px; color: #888; flex-shrink: 0; }
+
+    /* Gantt */
+    .gantt-wrap { padding: 16px 20px 20px; }
+    .gantt-legend { display: flex; gap: 16px; font-size: 11px; color: #888; margin-bottom: 14px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+    .gantt-body { display: flex; }
+    .gantt-labels { width: 150px; flex-shrink: 0; padding-right: 10px; }
+    .gantt-label-cell { height: 52px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 6px; }
+    .gantt-label-cell strong { font-size: 12px; font-weight: 600; }
+    .gantt-label-cell span { font-size: 10px; color: #888; margin-top: 1px; }
+    .gantt-spacer { height: 20px; }
+    .gantt-chart { flex: 1; position: relative; overflow: hidden; }
+    .month-header { position: relative; height: 20px; border-bottom: 1px solid #e8e8e6; margin-bottom: 0; }
+    .month-label { position: absolute; font-size: 10px; color: #999; transform: translateX(-50%); top: 3px; }
+    .gantt-rows { position: relative; }
+    .grid-line { position: absolute; top: 0; bottom: 0; width: 1px; background: #f0f0ee; z-index: 0; }
+    .today-line { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(33, 100, 200, 0.65); z-index: 8; }
+    .today-label { position: absolute; top: 2px; left: 3px; font-size: 9px; color: #2164c8; font-weight: 600; white-space: nowrap; }
+    .gantt-row { position: relative; height: 52px; margin-bottom: 6px; border-bottom: 1px solid #f5f5f3; }
+    .gantt-bar { position: absolute; height: 16px; top: 18px; border-radius: 3px; z-index: 2; }
+    .bar-done      { background: #4caf50; }
+    .bar-inprog    { background: #ff9800; }
+    .bar-ns        { background: #d0cfc8; }
+    .ms-marker { position: absolute; z-index: 6; transform: translateX(-50%); text-align: center; }
+    .ms-triangle { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 7px solid #c0392b; margin: 0 auto; }
+    .ms-label { font-size: 9px; color: #c0392b; white-space: nowrap; font-weight: 600; margin-top: 1px; }
+
+    footer { text-align: center; font-size: 11px; color: #bbb; margin-top: 32px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div id="dashboard"></div>
+
+  <footer id="footer"></footer>
+
+</div>
+<script>
+/* ============================================================
+   DATA — UPDATE THIS SECTION EACH WEEK
+   ============================================================ */
+const CONFIG = {
+  programName:   'Marketing Studio — Q2 2026',
+  subtitle:      'E2E Program · TPM: Prateeksha Chunkhare',
+  lastUpdated:   'Apr 28, 2026',
+  today:         '2026-04-28',          /* YYYY-MM-DD — update each time */
+  overallStatus: 'at-risk',             /* 'on-track' | 'at-risk' | 'blocked' */
+
+  /* ── TRACK STATUS TABLE ── */
+  tracks: [
+    {
+      name:          'Rel1 · MS Convergence',
+      owner:         'Gaurav Misra',
+      progress:      35,                /* 0–100 */
+      status:        'at-risk',         /* 'on-track' | 'at-risk' | 'blocked' */
+      nextMilestone: 'May 11 — Go Live',
+      urgent:        false,
+    },
+    {
+      name:          'Change Orders Ph1',
+      owner:         'Ponmurugesh P',
+      progress:      20,
+      status:        'at-risk',
+      nextMilestone: 'May 28 — Launch',
+      urgent:        false,
+    },
+    {
+      name:          'Change Orders Ph2',
+      owner:         'Ponmurugesh P',
+      progress:      20,
+      status:        'at-risk',
+      nextMilestone: 'Jun 12 — Launch',
+      urgent:        false,
+    },
+    {
+      name:          'Targeted Offer in MS',
+      owner:         'Ponmurugesh P',
+      progress:      50,
+      status:        'on-track',
+      nextMilestone: 'Jul 15 — Launch',
+      urgent:        false,
+    },
+    {
+      name:          'MS Opex',
+      owner:         'Gokul Sarangapani',
+      progress:      10,
+      status:        'blocked',
+      nextMilestone: 'Apr 30 — Release (2 days)',
+      urgent:        true,
+    },
+  ],
+
+  /* ── BLOCKERS / NEEDS ATTENTION ── */
+  blockers: [
+    {
+      severity: 'critical',
+      title:    'MS Opex Apr 30 release — 0 of 20 tasks complete, 2 days out',
+      owner:    'Gokul Sarangapani',
+    },
+    {
+      severity: 'critical',
+      title:    'XD Figma blocked (Rel1) — no ETA from Atul Joshi, risks May 11 Go Live',
+      owner:    'Atul Joshi',
+    },
+    {
+      severity: 'warning',
+      title:    'C95/39 Cluster (Rel5.3) — waiting on GBSG PD team',
+      owner:    'Enrique Barragan',
+    },
+  ],
+
+  /* ── TIMELINE GANTT ──
+     status: 'done' | 'in-progress' | 'not-started'
+     Milestones: alt:true staggers the label down to avoid overlap  */
+  ganttStart: '2026-04-01',
+  ganttEnd:   '2026-08-01',
+
+  ganttTracks: [
+    {
+      name: 'Rel1 · MS Conv.',
+      sub:  'Go Live May 11',
+      phases: [
+        { name: 'Planning & design', start: '2026-04-01', end: '2026-04-30', status: 'done' },
+        { name: 'Dev & testing',     start: '2026-04-24', end: '2026-05-08', status: 'in-progress' },
+        { name: 'UAT',               start: '2026-05-04', end: '2026-05-11', status: 'not-started' },
+      ],
+      milestones: [{ date: '2026-05-11', label: 'May 11', alt: false }],
+    },
+    {
+      name: 'Chg Orders Ph1',
+      sub:  'Launch May 28',
+      phases: [
+        { name: 'Planning',     start: '2026-04-01', end: '2026-04-27', status: 'done' },
+        { name: 'Code',         start: '2026-04-22', end: '2026-05-13', status: 'in-progress' },
+        { name: 'Test & UAT',   start: '2026-05-13', end: '2026-05-29', status: 'not-started' },
+      ],
+      milestones: [{ date: '2026-05-28', label: 'May 28', alt: false }],
+    },
+    {
+      name: 'Chg Orders Ph2',
+      sub:  'Launch Jun 12',
+      phases: [
+        { name: 'Planning',   start: '2026-04-06', end: '2026-04-30', status: 'done' },
+        { name: 'Code',       start: '2026-05-05', end: '2026-05-22', status: 'not-started' },
+        { name: 'Test & UAT', start: '2026-05-25', end: '2026-06-12', status: 'not-started' },
+      ],
+      milestones: [{ date: '2026-06-12', label: 'Jun 12', alt: false }],
+    },
+    {
+      name: 'Targeted Offer',
+      sub:  'Launch Jul 15',
+      phases: [
+        { name: 'Planning & design', start: '2026-04-28', end: '2026-05-29', status: 'in-progress' },
+        { name: 'Code',              start: '2026-06-01', end: '2026-06-26', status: 'not-started' },
+        { name: 'Test & UAT',        start: '2026-06-22', end: '2026-07-13', status: 'not-started' },
+      ],
+      milestones: [{ date: '2026-07-15', label: 'Jul 15', alt: false }],
+    },
+    {
+      name: 'MS Opex',
+      sub:  '4 rolling releases',
+      phases: [
+        { name: 'Dev active', start: '2026-04-23', end: '2026-05-08', status: 'in-progress' },
+      ],
+      milestones: [
+        { date: '2026-04-30', label: 'Apr 30', alt: true  },
+        { date: '2026-05-07', label: 'May 7',  alt: false },
+        { date: '2026-05-14', label: 'May 14', alt: true  },
+        { date: '2026-05-21', label: 'May 21', alt: false },
+      ],
+    },
+  ],
+};
+
+/* ============================================================
+   RENDER — no changes needed below this line
+   ============================================================ */
+(function render() {
+  const badgeClass = { 'on-track': 'badge-on-track', 'at-risk': 'badge-at-risk', 'blocked': 'badge-blocked' };
+  const badgeLabel = { 'on-track': '✓ On Track', 'at-risk': '▲ At Risk', 'blocked': '● Blocked' };
+  const progressColor = { 'on-track': '#4caf50', 'at-risk': '#ff9800', 'blocked': '#ef5350' };
+
+  /* Gantt helpers */
+  const RS = new Date(CONFIG.ganttStart), RE = new Date(CONFIG.ganttEnd);
+  const SPAN = RE - RS;
+  function pct(d) { return Math.max(0, Math.min(100, (new Date(d) - RS) / SPAN * 100)).toFixed(2); }
+  function barW(s, e) { return Math.max(0, (new Date(e) - new Date(s)) / SPAN * 100).toFixed(2); }
+  const BAR_CLASS = { 'done': 'bar-done', 'in-progress': 'bar-inprog', 'not-started': 'bar-ns' };
+
+  const months = [];
+  let d = new Date(CONFIG.ganttStart);
+  while (d <= RE) {
+    months.push({ label: d.toLocaleString('default', { month: 'short' }), date: d.toISOString().slice(0, 10) });
+    d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  }
+
+  /* ── HEADER ── */
+  let html = `
+    <div class="header">
+      <div class="header-left">
+        <h1>${CONFIG.programName}</h1>
+        <p>${CONFIG.subtitle} · Updated ${CONFIG.lastUpdated}</p>
+      </div>
+      <span class="status-badge ${badgeClass[CONFIG.overallStatus]}">${badgeLabel[CONFIG.overallStatus]}</span>
+    </div>`;
+
+  /* ── TRACK STATUS ── */
+  html += `<div class="section">
+    <div class="section-header">Track status</div>`;
+  CONFIG.tracks.forEach(t => {
+    html += `<div class="track-row">
+      <div class="track-name"><strong>${t.name}</strong><span>${t.owner}</span></div>
+      <div class="progress-wrap">
+        <div class="bar"><div class="bar-fill" style="width:${t.progress}%;background:${progressColor[t.status]}"></div></div>
+        <span class="bar-pct">${t.progress}%</span>
+      </div>
+      <span class="status-badge ${badgeClass[t.status]}" style="font-size:11px;padding:3px 10px">${badgeLabel[t.status]}</span>
+      <div class="milestone-info${t.urgent ? ' urgent' : ''}">${t.nextMilestone}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  /* ── BLOCKERS ── */
+  if (CONFIG.blockers.length) {
+    html += `<div class="section"><div class="section-header">Needs attention — ${CONFIG.blockers.length} items</div>`;
+    CONFIG.blockers.forEach(b => {
+      html += `<div class="blocker-row">
+        <div class="dot dot-${b.severity}"></div>
+        <div class="blocker-title">${b.title}</div>
+        <div class="blocker-owner">${b.owner}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  /* ── GANTT ── */
+  html += `<div class="section"><div class="section-header">Timeline — high-level phases</div>
+    <div class="gantt-wrap">
+      <div class="gantt-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#4caf50"></div>Completed</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#ff9800"></div>In progress</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#d0cfc8"></div>Not started</div>
+        <div class="legend-item"><div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:7px solid #c0392b"></div>Milestone</div>
+      </div>
+      <div class="gantt-body">
+        <div class="gantt-labels">
+          <div class="gantt-spacer"></div>`;
+
+  CONFIG.ganttTracks.forEach(t => {
+    html += `<div class="gantt-label-cell"><strong>${t.name}</strong><span>${t.sub}</span></div>`;
+  });
+
+  html += `</div><div class="gantt-chart">
+          <div class="month-header">`;
+  months.forEach(m => {
+    html += `<div class="month-label" style="left:${pct(m.date)}%">${m.label}</div>`;
+  });
+  html += `</div><div class="gantt-rows">`;
+
+  /* grid lines */
+  months.forEach(m => {
+    html += `<div class="grid-line" style="left:${pct(m.date)}%"></div>`;
+  });
+
+  /* today line */
+  html += `<div class="today-line" style="left:${pct(CONFIG.today)}%">
+    <div class="today-label">today</div>
+  </div>`;
+
+  /* track rows */
+  CONFIG.ganttTracks.forEach(t => {
+    html += `<div class="gantt-row">`;
+    t.phases.forEach(ph => {
+      const w = parseFloat(barW(ph.start, ph.end));
+      if (w > 0.05) {
+        html += `<div class="gantt-bar ${BAR_CLASS[ph.status]}" title="${ph.name}" style="left:${pct(ph.start)}%;width:${w}%"></div>`;
+      }
+    });
+    t.milestones.forEach(ms => {
+      const top = ms.alt ? 4 : 22;
+      html += `<div class="ms-marker" style="left:${pct(ms.date)}%;top:${top}px">
+        <div class="ms-triangle"></div>
+        <div class="ms-label">${ms.label}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  html += `</div></div></div></div></div>`;
+
+  document.getElementById('dashboard').innerHTML = html;
+  document.getElementById('footer').textContent = `Marketing Studio E2E Program · Last updated ${CONFIG.lastUpdated} · TPM: Prateeksha Chunkhare`;
+})();
+</script>
+</body>
+</html>
