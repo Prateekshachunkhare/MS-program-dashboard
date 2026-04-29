@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Studio — Release Plan Q4, FY26</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #e8e8e6; }
+    .wrap { max-width: 1280px; margin: 24px auto; padding: 0 20px 48px; }
+
+    .gantt { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.18); overflow: hidden; }
+
+    /* Title */
+    .g-title { background: #0d3b73; color: #fff; text-align: center; padding: 14px 24px; font-size: 20px; font-weight: 700; letter-spacing: .01em; }
+
+    /* Every row is a flex with label + chart */
+    .g-row { display: flex; }
+    .g-label {
+      width: 220px; min-width: 220px; flex-shrink: 0;
+      display: flex; align-items: center;
+      overflow: hidden; white-space: nowrap;
+    }
+    .g-chart { flex: 1; position: relative; min-width: 0; overflow: hidden; }
+
+    /* Column header */
+    .g-row-header .g-label {
+      height: 40px; background: #f5f5f3; border-bottom: 2px solid #c8c8c5;
+      border-right: 1px solid #c8c8c5; padding: 0 10px;
+      font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .05em;
+    }
+    .g-row-header .g-chart { height: 40px; background: #f5f5f3; border-bottom: 2px solid #c8c8c5; }
+    .week-grid { height: 100%; display: grid; }
+    .week-cell {
+      border-left: 1px solid #ddd;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 10px; color: #666; font-weight: 600; line-height: 1.35; text-align: center;
+    }
+
+    /* Group header */
+    .g-row-group .g-label {
+      height: 34px; background: #0d3b73;
+      border-right: 1px solid #1b4f92;
+      padding: 0 10px; flex-direction: column; align-items: flex-start; justify-content: center;
+    }
+    .g-row-group .g-chart { height: 34px; background: #0d3b73; }
+    .g-gname { font-size: 12px; font-weight: 700; color: #fff; width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .g-gmeta { font-size: 9.5px; color: rgba(255,255,255,.65); margin-top: 1px; width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Task rows */
+    .g-row-task .g-label {
+      height: 28px; background: #fff;
+      border-bottom: 1px solid #efefed; border-right: 1px solid #e0e0de;
+      padding: 0 10px 0 16px; font-size: 11px; color: #333;
+    }
+    .g-row-task .g-label.is-ms { font-style: italic; color: #888; font-size: 10px; }
+    .g-row-task .g-chart { height: 28px; border-bottom: 1px solid #efefed; background: #fff; }
+    .g-row-task:nth-child(even) .g-label,
+    .g-row-task:nth-child(even) .g-chart { background: #fafafa; }
+
+    /* Legend */
+    .g-legend {
+      display: flex; gap: 20px; padding: 12px 20px; background: #f5f5f3;
+      border-top: 1px solid #e0e0de; font-size: 11px; color: #555; flex-wrap: wrap; align-items: center;
+    }
+    .leg-item { display: flex; align-items: center; gap: 6px; }
+    .leg-sw { width: 22px; height: 10px; border-radius: 2px; }
+    .leg-dia { width: 9px; height: 9px; background: #1a5276; transform: rotate(45deg); }
+    .leg-today { width: 2px; height: 14px; background: #f39c12; }
+    .leg-box { width: 16px; height: 12px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="gantt" id="gantt"></div>
+</div>
+<script>
+/* ===================================================
+   DATA — UPDATE THIS SECTION EACH WEEK
+   ===================================================
+   status: 'done' | 'in-progress' | 'not-started'
+   milestone: a date string (or array for multi-diamond rows)
+   =================================================== */
+const DATA = {
+  title:     'Marketing Studio — Release Plan Q4, FY26',
+  today:     '2026-04-28',   /* YYYY-MM-DD — bump each refresh */
+  gridStart: '2026-04-14',
+  gridEnd:   '2026-07-07',
+
+  weeks: [
+    { top: 'Apr',    bot: '14–20',  start: '2026-04-14' },
+    { top: 'Apr',    bot: '21–27',  start: '2026-04-21' },
+    { top: 'Apr 28–',bot: 'May 4',  start: '2026-04-28' },
+    { top: 'May',    bot: '5–11',   start: '2026-05-05' },
+    { top: 'May',    bot: '12–18',  start: '2026-05-12' },
+    { top: 'May',    bot: '19–25',  start: '2026-05-19' },
+    { top: 'May 26–',bot: 'Jun 1',  start: '2026-05-26' },
+    { top: 'Jun',    bot: '2–8',    start: '2026-06-02' },
+    { top: 'Jun',    bot: '9–15',   start: '2026-06-09' },
+    { top: 'Jun',    bot: '16–22',  start: '2026-06-16' },
+    { top: 'Jun',    bot: '23–29',  start: '2026-06-23' },
+    { top: 'Jun 30–',bot: 'Jul 6',  start: '2026-06-30' },
+  ],
+
+  groups: [
+    {
+      name:   'Rel1 · MS Convergence',
+      driver: 'Gaurav Misra',
+      meta:   'Go-live: May 11',
+      rows: [
+        { task: 'Roadmap / PRD / Scope Doc', start: '2026-04-24', end: '2026-04-30', status: 'done'        },
+        { task: 'BU Use-cases',              start: '2026-04-24', end: '2026-04-30', status: 'done'        },
+        { task: 'XD Figma',                  start: '2026-04-24', end: '2026-04-30', status: 'in-progress' },
+        { task: 'Solution Design',           start: '2026-04-27', end: '2026-05-08', status: 'in-progress' },
+        { task: 'E2E Test Scenarios',        start: '2026-04-20', end: '2026-04-24', status: 'in-progress' },
+        { task: 'E2E Testing Execution',     start: '2026-04-24', end: '2026-04-30', status: 'not-started' },
+        { task: 'UAT',                       start: '2026-05-04', end: '2026-05-11', status: 'not-started' },
+        { task: 'Go live',                   milestone: '2026-05-11' },
+      ],
+    },
+    {
+      name:   'Change Orders Ph1',
+      driver: 'Ponmurugesh P',
+      meta:   'Launch: May 28',
+      rows: [
+        { task: 'Roadmap / PRD / XD Figma', start: '2026-04-14', end: '2026-04-27', status: 'done'        },
+        { task: 'Solution Design',          start: '2026-04-20', end: '2026-04-27', status: 'done'        },
+        { task: 'Code Completion',          start: '2026-04-22', end: '2026-05-13', status: 'in-progress' },
+        { task: 'E2E Test Scenarios',       start: '2026-05-13', end: '2026-05-22', status: 'not-started' },
+        { task: 'E2E Testing Execution',    start: '2026-05-13', end: '2026-05-22', status: 'not-started' },
+        { task: 'UAT',                      start: '2026-05-25', end: '2026-05-29', status: 'not-started' },
+        { task: 'Launch',                   milestone: '2026-05-28' },
+      ],
+    },
+    {
+      name:   'Change Orders Ph2',
+      driver: 'Ponmurugesh P',
+      meta:   'Launch: Jun 12',
+      rows: [
+        { task: 'Roadmap / PRD / XD Figma', start: '2026-04-14', end: '2026-04-27', status: 'done'        },
+        { task: 'Solution Design',          start: '2026-04-22', end: '2026-04-30', status: 'in-progress' },
+        { task: 'Code Completion',          start: '2026-05-05', end: '2026-05-22', status: 'not-started' },
+        { task: 'E2E Test Scenarios',       start: '2026-05-25', end: '2026-06-05', status: 'not-started' },
+        { task: 'E2E Testing Execution',    start: '2026-06-05', end: '2026-06-11', status: 'not-started' },
+        { task: 'UAT',                      start: '2026-06-05', end: '2026-06-12', status: 'not-started' },
+        { task: 'Launch',                   milestone: '2026-06-12' },
+      ],
+    },
+    {
+      name:   'Targeted Offer in MS',
+      driver: 'Ponmurugesh P',
+      meta:   'Launch: Jul 15',
+      rows: [
+        { task: 'Roadmap / PRD / BU Use-cases', start: '2026-04-28', end: '2026-05-15', status: 'in-progress' },
+        { task: 'XD Figma',                     start: '2026-05-11', end: '2026-05-18', status: 'not-started' },
+        { task: 'Solution Design',              start: '2026-05-18', end: '2026-05-29', status: 'not-started' },
+        { task: 'Code Completion',              start: '2026-06-01', end: '2026-06-26', status: 'not-started' },
+        { task: 'E2E Test Scenarios',           start: '2026-06-22', end: '2026-06-30', status: 'not-started' },
+        { task: 'E2E Testing Execution',        start: '2026-06-29', end: '2026-07-07', status: 'not-started' },
+        { task: 'UAT',                          start: '2026-07-01', end: '2026-07-13', status: 'not-started' },
+        { task: 'Launch',                       milestone: '2026-07-15' },
+      ],
+    },
+    {
+      name:   'MS Opex',
+      driver: 'Gokul Sarangapani',
+      meta:   '4 rolling releases',
+      rows: [
+        { task: 'Dev Complete',       start: '2026-04-23', end: '2026-04-27', status: 'in-progress' },
+        { task: 'E2E Test Complete',  start: '2026-04-27', end: '2026-04-29', status: 'in-progress' },
+        { task: 'Prod Test Complete', start: '2026-04-30', end: '2026-04-30', status: 'not-started' },
+        { task: 'Go live',            milestone: ['2026-04-30','2026-05-07','2026-05-14','2026-05-21'] },
+      ],
+    },
+  ],
+};
+
+/* ===================================================
+   RENDER — no changes needed below this line
+   =================================================== */
+(function () {
+  const GS   = new Date(DATA.gridStart);
+  const GE   = new Date(DATA.gridEnd);
+  const SPAN = GE - GS;
+  const N    = DATA.weeks.length;
+
+  function pct(d) {
+    return Math.max(0, Math.min(100, (new Date(d) - GS) / SPAN * 100));
+  }
+  function bw(s, e) {
+    return Math.max(0.5, (new Date(e) - new Date(s)) / SPAN * 100);
+  }
+
+  const BARCOLOR = { 'done': '#27ae60', 'in-progress': '#e67e22', 'not-started': '#f0c040' };
+  const todayL   = pct(DATA.today).toFixed(2);
+
+  /* Shared inner content for every chart cell */
+  function chartInner(content, isDark) {
+    const lineColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.055)';
+    const gridLines = DATA.weeks.slice(1).map((_, i) =>
+      `<div style="position:absolute;left:${((i+1)/N*100).toFixed(2)}%;top:0;bottom:0;width:1px;background:${lineColor};z-index:0;pointer-events:none"></div>`
+    ).join('');
+    const todayLine = `<div style="position:absolute;left:${todayL}%;top:0;bottom:0;width:2px;background:rgba(243,156,18,.9);z-index:10;pointer-events:none"></div>`;
+    return gridLines + todayLine + content;
+  }
+
+  let html = `<div class="g-title">${DATA.title}</div>`;
+
+  /* ── Column header ── */
+  html += `<div class="g-row g-row-header">
+    <div class="g-label">Milestone</div>
+    <div class="g-chart">
+      <div class="week-grid" style="grid-template-columns:repeat(${N},1fr);height:100%">
+        ${DATA.weeks.map(w => `<div class="week-cell"><span>${w.top}</span><span>${w.bot}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  /* ── Groups ── */
+  DATA.groups.forEach(g => {
+
+    /* Group header row */
+    html += `<div class="g-row g-row-group">
+      <div class="g-label">
+        <span class="g-gname">${g.name}</span>
+        <span class="g-gmeta">Driver: ${g.driver} &nbsp;·&nbsp; ${g.meta}</span>
+      </div>
+      <div class="g-chart" style="background:#0d3b73">${chartInner('', true)}</div>
+    </div>`;
+
+    /* Task rows */
+    g.rows.forEach(r => {
+      let inner = '';
+
+      if (r.milestone) {
+        /* Diamond(s) */
+        const dates = Array.isArray(r.milestone) ? r.milestone : [r.milestone];
+        inner = dates.map(d => {
+          const lft = pct(d).toFixed(2);
+          return `<div style="position:absolute;left:${lft}%;top:50%;transform:translate(-50%,-50%) rotate(45deg);width:11px;height:11px;background:#1a5276;z-index:5"></div>`;
+        }).join('');
+      } else {
+        /* Task bar */
+        const lft  = pct(r.start).toFixed(2);
+        const wid  = bw(r.start, r.end).toFixed(2);
+        const bg   = BARCOLOR[r.status] || '#ccc';
+        const showLabel = parseFloat(wid) >= 4;
+        const textColor = r.status === 'not-started' ? 'rgba(0,0,0,.65)' : '#fff';
+        inner = `<div style="position:absolute;left:${lft}%;width:${wid}%;height:15px;top:6.5px;border-radius:2px;background:${bg};z-index:2;overflow:hidden" title="${r.task}">
+          ${showLabel ? `<span style="position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:9.5px;font-weight:600;color:${textColor};white-space:nowrap;pointer-events:none">${r.task}</span>` : ''}
+        </div>`;
+      }
+
+      html += `<div class="g-row g-row-task">
+        <div class="g-label${r.milestone ? ' is-ms' : ''}">${r.task}</div>
+        <div class="g-chart">${chartInner(inner, false)}</div>
+      </div>`;
+    });
+  });
+
+  /* ── Legend ── */
+  const todayFmt = new Date(DATA.today).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  html += `<div class="g-legend">
+    <div class="leg-item"><div class="leg-box" style="background:#0d3b73"></div>Release group</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#27ae60"></div>Completed</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#e67e22"></div>In progress</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#f0c040"></div>Not started</div>
+    <div class="leg-item"><div class="leg-dia"></div>Milestone</div>
+    <div class="leg-item"><div class="leg-today"></div>Today — ${todayFmt}</div>
+  </div>`;
+
+  document.getElementById('gantt').innerHTML = html;
+})();
+</script>
+</body>
+</html>
