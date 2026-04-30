@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketing Studio &middot; Program Dashboard</title>
+<style>
+:root {
+  --brand:#4f46e5; --brand-light:#ede9fe; --brand-mid:#c7d2fe;
+  --red:#ef4444; --red-light:#fef2f2; --red-mid:#fecaca;
+  --green:#10b981; --green-light:#ecfdf5; --green-mid:#6ee7b7;
+  --amber:#f59e0b; --amber-light:#fffbeb; --amber-mid:#fde68a;
+  --blue:#3b82f6; --blue-light:#eff6ff;
+  --purple:#7c3aed; --purple-light:#f5f3ff;
+  --gray:#6b7280; --gray-light:#f3f4f6; --border:#e5e7eb;
+  --bg:#f9fafb; --surface:#ffffff; --text:#111827; --text-2:#374151;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:20px 20px 60px;min-height:100vh;font-size:16px}
+.program-bar{background:#ffffff;border-bottom:2px solid #e5e7eb;padding:14px 28px 0 28px;display:flex;flex-direction:column;gap:0;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.program-bar-top{display:flex;align-items:center;gap:10px;padding-bottom:14px}
+.program-icon{font-size:20px;opacity:.85}
+.program-title{font-size:15px;font-weight:800;letter-spacing:.01em;color:var(--text)}
+.program-subtitle{font-size:11px;color:var(--gray);font-weight:400;margin-top:1px}
+.tab-bar{display:flex;gap:0;flex-wrap:wrap;background:transparent}
+.tab{padding:9px 18px;font-size:12px;font-weight:600;cursor:pointer;border-radius:0;color:var(--gray);background:transparent;border:none;border-bottom:3px solid transparent;transition:color .15s,border-color .15s,background .15s;white-space:nowrap}
+.tab:hover{color:#4f46e5;background:#f5f3ff}
+.tab.active{color:#4f46e5;border-bottom-color:#4f46e5;background:#f5f3ff}
+.page{display:none}.page.active{display:block}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.header-left h1{font-size:19px;font-weight:800;letter-spacing:-.3px;color:var(--text)}
+.header-left .sub{font-size:11.5px;color:var(--gray);margin-top:3px}
+.ext-link{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--brand);text-decoration:none;border:1.5px solid var(--brand-mid);border-radius:8px;padding:6px 13px;background:var(--brand-light);white-space:nowrap;transition:background .15s}
+.ext-link:hover{background:#ddd6fe}
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--gray);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:12px}
+.section-divider{border:none;border-top:1px solid var(--border);margin:18px 0}
+.summary-row{display:flex;gap:12px;margin-bottom:24px;width:100%}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);flex:1 1 0;min-width:0}
+.summary-card .val{font-size:28px;font-weight:900;line-height:1}
+.summary-card .lbl{font-size:9.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
+.val-brand{color:var(--brand)}.val-green{color:var(--green)}.val-red{color:var(--red)}
+.rel-tiles{display:flex;gap:10px;margin-bottom:10px;width:100%}
+.rel-tile{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);flex:1 1 0;min-width:0}
+.rel-tile-icon{font-size:18px;line-height:1}
+.rel-tile-val{font-size:20px;font-weight:900;line-height:1}
+.rel-tile-lbl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.metric-strip{display:flex;flex-wrap:wrap;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:22px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.metric-strip-item{flex:1;min-width:80px;padding:12px 14px;text-align:center;border-right:1px solid var(--border)}
+.metric-strip-item:last-child{border-right:none}
+.metric-strip-val{font-size:22px;font-weight:900;line-height:1}
+.metric-strip-lbl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.rel-two-col{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;margin-bottom:22px;align-items:start}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.chart-card h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:14px}
+.chart-wrap canvas{max-height:220px}
+.status-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.s-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px}
+.s-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.s-done{background:var(--green-light);color:#065f46}
+.s-prog{background:var(--amber-light);color:#92400e}
+.s-block{background:var(--red-light);color:#991b1b}
+.s-ns{background:var(--purple-light);color:#5b21b6}
+.proj-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:box-shadow .18s,border-color .18s,transform .18s;margin-bottom:10px;position:relative}
+.proj-card:last-child{margin-bottom:0}
+.proj-card:hover{box-shadow:0 6px 18px rgba(79,70,229,.1);border-color:var(--brand-mid);transform:translateY(-1px)}
+.proj-card.active{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-mid);transform:none}
+.proj-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.proj-card-name{font-size:13.5px;font-weight:800;color:var(--text)}
+.proj-card-dates{font-size:10px;color:var(--gray);margin-top:1px}
+.proj-card-right{display:flex;align-items:center;gap:8px}
+.proj-total{font-size:20px;font-weight:900}
+.proj-total-lbl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;line-height:1.2}
+.chevron{font-size:10px;color:var(--gray);transition:transform .2s;margin-left:4px}
+.proj-card.active .chevron{transform:rotate(180deg);color:var(--brand)}
+.proj-progress-bar{height:6px;border-radius:4px;background:var(--gray-light);overflow:hidden;margin-bottom:10px;display:flex;gap:1px}
+.pb-seg{height:100%;border-radius:4px}
+.proj-status-row{display:flex;gap:6px;flex-wrap:wrap}
+.proj-detail{display:none;background:var(--surface);border:2px solid var(--brand);border-radius:14px;padding:18px 20px;margin-bottom:22px;box-shadow:0 4px 20px rgba(79,70,229,.1);animation:slideIn .2s ease}
+.proj-detail.visible{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.proj-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.proj-detail-title{font-size:15px;font-weight:800;color:var(--text)}
+.close-btn{font-size:20px;cursor:pointer;color:var(--gray);border:none;background:none;padding:2px 7px;border-radius:6px;line-height:1}
+.close-btn:hover{background:#f3f4f6}
+.milestone-list{list-style:none}
+.milestone-li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12.5px}
+.milestone-li:last-child{border-bottom:none}
+.ms-num{flex-shrink:0;width:22px;height:22px;background:var(--brand-light);color:var(--brand);border-radius:6px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.ms-label{flex:1;font-weight:500;color:var(--text-2)}
+.ms-owner{font-size:11px;color:var(--gray);flex-shrink:0;min-width:80px;text-align:right}
+.ms-end{font-size:11px;font-weight:600;color:var(--text);margin-left:8px;flex-shrink:0}
+.chip{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;margin-left:6px}
+.chip-done{background:var(--green-light);color:#065f46}
+.chip-prog{background:var(--amber-light);color:#92400e}
+.chip-ns{background:var(--purple-light);color:#5b21b6}
+.chip-block{background:var(--red-light);color:#991b1b}
+.proj-chip-btn{cursor:pointer;border:none;font:inherit;transition:opacity .15s,transform .1s;line-height:inherit}
+.proj-chip-btn:hover{opacity:.75;transform:scale(1.08)}
+.proj-chip-btn:active{transform:scale(.95)}
+.owner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
+.owner-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;position:relative;transition:box-shadow .18s,border-color .18s,transform .18s;user-select:none}
+.owner-card:hover{box-shadow:0 6px 18px rgba(79,70,229,.12);border-color:var(--brand-mid);transform:translateY(-2px)}
+.owner-card.active{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-mid);transform:translateY(-2px)}
+.status-bar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:12px 12px 0 0}
+.status-bar.overdue{background:linear-gradient(90deg,var(--red),var(--amber))}
+.status-bar.ok{background:linear-gradient(90deg,var(--green),#34d399)}
+.owner-top{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.owner-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.owner-name-wrap{flex:1;padding:0 9px}
+.owner-name{font-size:13px;font-weight:700;line-height:1.2}
+.owner-stats{display:flex;gap:8px}
+.stat-box{flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:7px 4px}
+.stat-box .num{font-size:20px;font-weight:900;line-height:1}
+.stat-box .lbl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.num-brand{color:var(--brand)}.num-red{color:var(--red)}.num-green{color:var(--green)}
+.risk-pill{margin-top:8px;font-size:10px;font-weight:600;color:var(--red);background:var(--red-light);border:1px solid var(--red-mid);border-radius:6px;padding:3px 8px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail-panel{display:none;background:var(--surface);border:2px solid var(--brand);border-radius:14px;padding:20px 22px;margin-bottom:24px;box-shadow:0 4px 24px rgba(79,70,229,.1);animation:slideIn .2s ease}
+.detail-panel.visible{display:block}
+.detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.detail-title{display:flex;align-items:center;gap:10px}
+.detail-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff}
+.detail-name{font-size:15px;font-weight:800}
+.detail-count{font-size:11.5px;color:var(--gray);margin-top:2px}
+.item-list{list-style:none}
+.item-list li{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:12.5px;color:var(--text-2);line-height:1.5}
+.item-list li:last-child{border-bottom:none}
+.item-num{flex-shrink:0;min-width:22px;height:22px;background:var(--brand-light);color:var(--brand);border-radius:6px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.item-num.od{background:var(--red-light);color:var(--red)}
+.overdue-badge{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:var(--red);background:var(--red-light);border:1px solid var(--red-mid);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;flex-shrink:0}
+.item-link{color:inherit;text-decoration:none}
+.item-link:hover{color:var(--brand);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px}
+.item-link .ss-icon{font-size:10px;color:var(--brand);opacity:.5;margin-left:4px}
+.item-link:hover .ss-icon{opacity:1}
+.link-hint{font-size:10px;color:var(--gray);margin-bottom:10px;padding:6px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:5px}
+.gantt-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.gantt-section h3{font-size:13px;font-weight:800;margin-bottom:14px;color:var(--text)}
+.gantt-header{display:flex;margin-bottom:6px;margin-left:160px}
+.gantt-month{flex:1;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray);text-align:center;border-left:1px dashed var(--border);padding-left:4px}
+.gantt-row{display:flex;align-items:center;margin-bottom:7px}
+.gantt-label{width:155px;flex-shrink:0;font-size:11px;color:var(--text-2);font-weight:500;padding-right:10px;line-height:1.3}
+.gantt-track{flex:1;height:22px;background:var(--gray-light);border-radius:4px;position:relative;overflow:visible}
+.gantt-bar{position:absolute;height:100%;border-radius:4px;min-width:6px}
+.gantt-bar.completed{background:linear-gradient(90deg,#059669,#34d399)}
+.gantt-bar.in-progress{background:linear-gradient(90deg,#d97706,#fbbf24)}
+.gantt-bar.not-started{background:linear-gradient(90deg,#6366f1,#818cf8)}
+.gantt-bar.blocked{background:linear-gradient(90deg,#dc2626,#f87171)}
+.milestone-marker{position:absolute;width:14px;height:14px;background:var(--text);border-radius:3px;transform:rotate(45deg);top:4px;z-index:2}
+.gantt-divider{border:none;border-top:2px dashed #e5e7eb;margin:10px 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.leg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--gray)}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ms-table{width:100%;border-collapse:collapse;font-size:12px}
+.ms-table th{background:var(--bg);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray);padding:8px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.ms-table td{padding:8px 10px;border-bottom:1px solid #f3f4f6;vertical-align:top;color:var(--text-2)}
+.ms-table tr:last-child td{border-bottom:none}
+.ms-table tr:hover td{background:#fafbff}
+.track-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.track-conv{background:var(--brand-light);color:var(--brand)}
+.track-co1{background:#ecfdf5;color:#065f46}
+.track-co2{background:#fff7ed;color:#9a3412}
+/* ── MILESTONE TIMELINE STRIP (dashboard) ── */
+/* subtle milestone pill row */
+.ms-timeline-wrap{margin-bottom:16px}
+.ms-timeline-hd{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:10px}
+.ms-timeline-rail{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ms-tl-node{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px 5px 8px;cursor:default;transition:box-shadow .15s}
+.ms-tl-node:hover{box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.ms-tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ms-tl-date{font-size:10px;font-weight:700;color:var(--text)}
+.ms-tl-title{font-size:10px;color:var(--text-2)}
+.ms-tl-track{display:none}
+.ms-tl-cd{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:2px}
+.ms-tl-info-top,.ms-tl-info-bot{display:contents}
+.ms-tl-node-alt{}
+
+.footer{font-size:10.5px;color:#d1d5db;text-align:right;margin-top:14px}
+.blank-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:340px;text-align:center;gap:14px;color:var(--gray)}
+.blank-page-icon{font-size:48px;opacity:.35}
+.blank-page-title{font-size:16px;font-weight:700;color:var(--text-2)}
+.blank-page-sub{font-size:12.5px;color:var(--gray);max-width:320px;line-height:1.6}
+.health-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.health-card{flex:1;min-width:120px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);cursor:pointer;transition:box-shadow .18s,border-color .18s,transform .15s}
+.health-card:hover{box-shadow:0 6px 18px rgba(79,70,229,.1);border-color:var(--brand-mid);transform:translateY(-2px)}
+.health-card.active{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-mid);transform:none}
+.health-card .h-val{font-size:32px;font-weight:900;line-height:1}
+.health-card .h-lbl{font-size:9.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
+.health-card .h-sub{font-size:10px;color:var(--gray);margin-top:3px}
+.health-detail{display:none;background:var(--surface);border:2px solid var(--brand);border-radius:14px;padding:18px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(79,70,229,.1);animation:slideIn .2s ease}
+.health-detail.visible{display:block}
+.health-item-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.health-item-row:last-child{border-bottom:none}
+.health-item-track{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;flex-shrink:0;margin-top:1px}
+.ht-conv{background:var(--brand-light);color:var(--brand)}
+.ht-co{background:#ecfdf5;color:#065f46}
+.ht-raid{background:#fff7ed;color:#9a3412}
+.health-item-ms{font-size:10px;color:var(--gray);flex-shrink:0;min-width:90px}
+.health-item-task{flex:1;color:var(--text-2);font-weight:500;line-height:1.4}
+.health-item-owner{font-size:11px;color:var(--gray);flex-shrink:0;text-align:right;min-width:80px}
+.health-item-date{font-size:11px;font-weight:600;color:var(--text);flex-shrink:0;margin-left:6px}
+.ms-group-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .18s,border-color .18s}
+.ms-group-card:hover{box-shadow:0 4px 14px rgba(79,70,229,.1);border-color:var(--brand-mid)}
+.ms-group-card.open{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-mid)}
+.ms-group-header{display:flex;align-items:center;justify-content:space-between}
+.ms-group-name{font-size:13.5px;font-weight:800;color:var(--text)}
+.ms-group-chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ms-group-body{display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+.ms-group-body.open{display:block}
+.wbs-task-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.wbs-task-row:last-child{border-bottom:none}
+.wbs-task-name{flex:1;color:var(--text-2);font-weight:500}
+.wbs-task-owner{font-size:11px;color:var(--gray);min-width:100px;text-align:right;flex-shrink:0}
+.wbs-task-date{font-size:11px;font-weight:600;color:var(--text);margin-left:6px;flex-shrink:0}
+.wbs-summary{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+/* ── MS OPEX pipeline ── */
+.opex-progress-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;align-items:center;gap:24px}
+.opex-donut-wrap{position:relative;flex-shrink:0}
+.opex-donut-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.opex-donut-pct{font-size:20px;font-weight:900;line-height:1;color:var(--text)}
+.opex-donut-sub{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em}
+.opex-donut-stats{flex:1}
+.opex-donut-stat-row{display:flex;gap:16px;flex-wrap:wrap}
+.opex-donut-stat{text-align:center}
+.opex-donut-stat .dv{font-size:22px;font-weight:900;line-height:1}
+.opex-donut-stat .dl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.opex-milestone-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.opex-ms-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;background:var(--amber-light);color:#92400e;border:1.5px solid var(--amber-mid);cursor:default}
+.opex-ms-btn .ms-flag{font-size:14px}
+.opex-ms-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray)}
+.opex-milestone-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:16px;font-size:12px;font-weight:700;background:var(--amber-light);color:#92400e;border:1.5px solid var(--amber-mid)}
+.track-progress-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.co-phase-header{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin:20px 0 10px;padding:6px 10px;background:var(--gray-light);border-radius:6px;display:inline-block}
+.opex-release-section{margin-bottom:28px}
+.opex-release-header{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:12px;padding:6px 10px;background:var(--gray-light);border-radius:6px;display:inline-block}
+.opex-pipeline{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;margin-bottom:8px}
+.opex-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;min-width:140px;flex:1;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.opex-card.milestone-card{background:var(--amber-light);border-color:var(--amber-mid)}
+.opex-card-id{font-size:9.5px;color:var(--gray);font-weight:600;margin-bottom:4px}
+.opex-card-step{font-size:12.5px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.3}
+.opex-card-driver{font-size:10.5px;color:var(--gray);margin-bottom:6px}
+.opex-card-dates{font-size:10px;color:var(--gray);margin-bottom:6px}
+.opex-card-milestone-badge{font-size:9px;font-weight:700;color:#92400e;background:var(--amber-mid);border-radius:4px;padding:1px 6px;display:inline-block;margin-bottom:4px}
+.opex-arrow{display:flex;align-items:center;padding:0 4px;color:var(--gray);font-size:18px;align-self:center;flex-shrink:0}
+.opex-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:10px}
+.opex-status-badge.In.Progress,.opex-status-inprogress{background:var(--amber-light);color:#92400e}
+.opex-status-badge.Not.Started,.opex-status-notstarted{background:var(--purple-light);color:#5b21b6}
+.opex-status-badge.Completed,.opex-status-completed{background:var(--green-light);color:#065f46}
+/* ── RAID enhanced ── */
+.raid-filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.raid-filter-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);flex-shrink:0;min-width:44px}
+.filter-chip{display:inline-flex;align-items:center;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--gray);transition:all .15s;user-select:none}
+.filter-chip:hover{border-color:var(--brand-mid);color:var(--brand)}
+.filter-chip.active{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
+.raid-metrics-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.raid-metric-card{flex:1;min-width:80px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.raid-metric-card .rmv{font-size:22px;font-weight:900;line-height:1}
+.raid-metric-card .rml{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.raid-item-card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px 12px 18px;margin-bottom:8px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.04);text-decoration:none;color:inherit}
+a.raid-item-card{cursor:pointer;transition:box-shadow .15s,border-color .15s,transform .12s}
+a.raid-item-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.10);border-color:var(--brand);transform:translateY(-1px)}
+.raid-item-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:10px 0 0 10px}
+.raid-item-card.type-action::before{background:var(--purple)}
+.raid-item-card.type-risk::before{background:var(--amber)}
+.raid-item-card.type-decision::before{background:var(--blue)}
+.raid-item-card.type-issue::before{background:var(--red)}
+.raid-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.raid-item-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;flex:1}
+.raid-item-type-badge{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0;margin-top:1px}
+.rtype-action{background:var(--purple-light);color:var(--purple)}
+.rtype-risk{background:var(--amber-light);color:#92400e}
+.rtype-decision{background:var(--blue-light);color:#1d4ed8}
+.rtype-issue{background:var(--red-light);color:#991b1b}
+.raid-item-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.raid-tag{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:4px}
+.rtag-status-open{background:#f0fdf4;color:#166534}
+.rtag-status-inprogress{background:var(--amber-light);color:#92400e}
+.rtag-status-notstarted{background:var(--purple-light);color:#5b21b6}
+.rtag-pri-high{background:var(--red-light);color:#991b1b}
+.rtag-pri-medium{background:#fff7ed;color:#9a3412}
+.rtag-pri-low{background:var(--gray-light);color:var(--gray)}
+.rtag-track{background:var(--brand-light);color:var(--brand)}
+.raid-item-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.raid-item-owner{font-size:11px;color:var(--gray)}
+.raid-item-due{font-size:11px;font-weight:600;color:var(--text-2)}
+.raid-open-hint{font-size:10.5px;font-weight:600;color:var(--brand);opacity:.7;margin-left:auto}
+a.raid-item-card:hover .raid-open-hint{opacity:1}
+/* ── TO2 Phase Layout ── */
+.to2-section-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:16px}
+.to2-timeline-wrap{display:flex;align-items:flex-start;gap:0;margin-bottom:28px;overflow-x:auto;padding-bottom:4px}
+.to2-phase-node{display:flex;flex-direction:column;align-items:center;min-width:120px;position:relative;flex:1}
+.to2-phase-node:not(:last-child)::after{content:'';position:absolute;top:22px;left:50%;right:-50%;height:2px;background:var(--border);z-index:0}
+.to2-phase-bubble{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;z-index:1;position:relative;margin-bottom:6px;border:3px solid transparent}
+.to2-phase-bubble.ph-completed{background:#dcfce7;color:#166534;border-color:#22c55e}
+.to2-phase-bubble.ph-inprogress{background:#dbeafe;color:#1d4ed8;border-color:#3b82f6}
+.to2-phase-bubble.ph-notstarted{background:var(--gray-light);color:var(--gray);border-color:#d1d5db}
+.to2-phase-label{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px}
+.to2-phase-date{font-size:10px;color:var(--gray)}
+.to2-phase-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;margin-top:3px}
+.to2-phase-badge.ph-completed{background:#dcfce7;color:#166534}
+.to2-phase-badge.ph-inprogress{background:#dbeafe;color:#1d4ed8}
+.to2-phase-badge.ph-notstarted{background:var(--gray-light);color:var(--gray)}
+.to2-phase-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.to2-phase-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8fafc;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.to2-phase-header:hover{background:#f1f5f9}
+.to2-phase-header-left{display:flex;align-items:center;gap:10px}
+.to2-phase-num{font-size:12px;font-weight:800;color:var(--brand);min-width:28px}
+.to2-phase-title{font-size:13px;font-weight:700;color:var(--text)}
+.to2-phase-dur{font-size:10px;color:var(--gray);font-weight:500}
+.to2-phase-header-right{display:flex;align-items:center;gap:10px}
+.to2-phase-end-date{font-size:11px;color:var(--gray)}
+.to2-phase-status-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px}
+.to2-ps-completed{background:#dcfce7;color:#166534}
+.to2-ps-inprogress{background:#dbeafe;color:#1d4ed8}
+.to2-ps-notstarted{background:var(--gray-light);color:var(--gray)}
+.to2-task-table{width:100%;border-collapse:collapse;font-size:12px}
+.to2-task-table th{padding:7px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray);border-bottom:1px solid var(--border);background:#fafafa}
+.to2-task-table td{padding:8px 14px;border-bottom:1px solid #f1f5f9;color:var(--text);vertical-align:middle}
+.to2-task-table tr:last-child td{border-bottom:none}
+.to2-task-table tr:hover td{background:#f8fafc}
+.to2-task-name{font-weight:500}
+.to2-task-name.indent-1{padding-left:20px;color:var(--text-2);font-weight:400}
+.to2-status-chip{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:8px}
+.to2-sc-completed{background:#dcfce7;color:#166534}
+.to2-sc-inprogress{background:#fef3c7;color:#92400e}
+.to2-sc-notstarted{background:var(--gray-light);color:var(--gray)}
+.to2-chevron{font-size:12px;color:var(--gray);transition:transform .2s}
+.to2-chevron.open{transform:rotate(180deg)}
+.to2-empty-msg{padding:20px;text-align:center;color:var(--gray);font-size:12px}
+/* ── Program Dashboard ── */
+.prog-stats-bar{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;align-items:center}
+.prog-stat-item{display:flex;align-items:center;gap:6px;font-size:12px}
+.prog-stat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.prog-stat-num{font-weight:800;color:var(--text)}
+.prog-stat-lbl{color:var(--gray)}
+.prog-track-filter-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.prog-track-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-right:4px}
+.prog-track-chip{font-size:11px;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--gray);transition:all .15s;user-select:none}
+.prog-track-chip.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.prog-track-chip:hover{border-color:var(--brand);color:var(--brand)}
+.prog-track-chip.active:hover{color:#fff}
+.prog-track-progress-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.prog-donut-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;min-width:200px;flex:1}
+.prog-donut-card-label{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px}
+.prog-donut-card-stats{display:flex;gap:12px;flex-wrap:wrap}
+.prog-donut-stat{text-align:center}
+.prog-donut-stat .dv{font-size:14px;font-weight:800}
+.prog-donut-stat .dl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.04em}
+.prog-track-section{margin-bottom:28px}
+.prog-track-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none}
+.prog-track-header-label{font-size:12px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.prog-track-header-meta{font-size:11px;color:var(--gray)}
+/* Detailed Gantt table */
+.prog-gantt-wrap{margin-top:0;border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden}
+.prog-gantt-title{padding:7px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);background:#fafafa;border-bottom:1px solid var(--border)}
+.prog-gantt-scroll{overflow-x:auto}
+.prog-gantt-table{width:100%;border-collapse:collapse;font-size:11px}
+.prog-gantt-table th{padding:5px 10px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray);white-space:nowrap;text-align:left}
+.prog-gantt-table td{padding:4px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle;white-space:nowrap}
+.prog-gantt-table tr:last-child td{border-bottom:none}
+.prog-gantt-table tr:hover td{background:#fafafa}
+.pgt-id{color:var(--gray);font-size:10px;font-family:monospace}
+.pgt-task{font-weight:700;color:var(--text)}
+.pgt-driver{color:var(--gray);max-width:90px;overflow:hidden;text-overflow:ellipsis}
+.pgt-date{color:var(--text-2);font-size:10.5px}
+.pgt-bar-cell{min-width:320px;padding:0 10px}
+.pgt-bar-track{position:relative;height:14px;background:#f1f5f9;border-radius:3px;margin:5px 0}
+.pgt-today-line{position:absolute;top:-2px;bottom:-2px;width:2px;background:rgba(239,68,68,.4);z-index:2}
+.pgt-bar{position:absolute;top:0;bottom:0;border-radius:3px;min-width:4px}
+.pgt-milestone-marker{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#f59e0b;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);z-index:3}
+.pgt-range-label{font-size:9px;color:var(--gray);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="program-bar">
+  <div class="program-bar-top">
+    <span class="program-icon">&#128202;</span>
+    <div>
+      <div class="program-title">Marketing Studio &mdash; Program Dashboard</div>
+      <div class="program-subtitle">E2E Program Dashboard &middot; Q2 2026 &middot; TPM: Prateeksha Chunkhare</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('main',this)">Program Dashboard</button>
+    <button class="tab" onclick="showTab('raid',this)">&#128203; RAID Log</button>
+  </div>
+</div>
+
+<!-- PAGE 1: PROGRAM DASHBOARD -->
+<div id="page-main" class="page active">
+  <div id="msDashTimeline"></div>
+  <div class="prog-track-filter-row">
+    <span class="prog-track-label">TRACK</span>
+    <span class="prog-track-chip active" data-track="All" onclick="filterProgTrack('All',this)">All</span>
+    <span class="prog-track-chip" data-track="MS Opex" onclick="filterProgTrack('MS Opex',this)">MS_Opex</span>
+    <span class="prog-track-chip" data-track="MS Convergence" onclick="filterProgTrack('MS Convergence',this)">Rel1 &middot; MS Convergence</span>
+    <span class="prog-track-chip" data-track="Change Orders" onclick="filterProgTrack('Change Orders',this)">Change Orders</span>
+    <span class="prog-track-chip" data-track="Targeted Offer" onclick="filterProgTrack('Targeted Offer',this)">Targeted Offer 2.0</span>
+  </div>
+  <div class="section-title" style="margin-top:16px;margin-bottom:10px">Track Progress</div>
+  <div class="prog-track-progress-row" id="progTrackProgressRow"></div>
+  <div id="progOpexSection" class="prog-track-section"></div>
+  <div id="progConvSection" class="prog-track-section"></div>
+  <div id="progCOSection" class="prog-track-section"></div>
+  <div id="progTO2Section" class="prog-track-section"></div>
+</div>
+
+<!-- PAGE 2: RAID LOG -->
+<div id="page-raid" class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Marketing Studio &middot; RAID Log</h1>
+      <div class="sub">Risks &middot; Actions &middot; Issues &middot; Decisions &middot; April 27, 2026</div>
+    </div>
+    <a class="ext-link" href="https://app.smartsheet.com/sheets/3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1?view=grid" target="_blank">&#8599; Open in Smartsheet</a>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-card"><div class="val val-brand">35</div><div class="lbl">Open Items</div></div>
+    <div class="summary-card"><div class="val val-green">14</div><div class="lbl">Owners</div></div>
+    <div class="summary-card"><div class="val val-red">16</div><div class="lbl">Overdue</div></div>
+  </div>
+
+  <div class="raid-filter-row">
+    <span class="raid-filter-label">TYPE</span>
+    <span class="filter-chip active" data-filter-type="type" data-filter-val="All" onclick="filterRaid('type','All',this)">All</span>
+    <span class="filter-chip" data-filter-type="type" data-filter-val="Risk" onclick="filterRaid('type','Risk',this)">Risk</span>
+    <span class="filter-chip" data-filter-type="type" data-filter-val="Action Item" onclick="filterRaid('type','Action Item',this)">Action</span>
+    <span class="filter-chip" data-filter-type="type" data-filter-val="Issue" onclick="filterRaid('type','Issue',this)">Issue</span>
+    <span class="filter-chip" data-filter-type="type" data-filter-val="Decision" onclick="filterRaid('type','Decision',this)">Decision</span>
+  </div>
+  <div class="raid-filter-row" style="margin-bottom:14px">
+    <span class="raid-filter-label">TRACK</span>
+    <span class="filter-chip active" data-filter-type="track" data-filter-val="All" onclick="filterRaid('track','All',this)">All</span>
+    <span class="filter-chip" data-filter-type="track" data-filter-val="R2_Chg_Order_MVP" onclick="filterRaid('track','R2_Chg_Order_MVP',this)">Change Orders</span>
+    <span class="filter-chip" data-filter-type="track" data-filter-val="MS Convergence" onclick="filterRaid('track','MS Convergence',this)">MS Convergence</span>
+    <span class="filter-chip" data-filter-type="track" data-filter-val="MS" onclick="filterRaid('track','MS',this)">MS</span>
+    <span class="filter-chip" data-filter-type="track" data-filter-val="R0_Stability" onclick="filterRaid('track','R0_Stability',this)">Stability</span>
+    <span class="filter-chip" data-filter-type="track" data-filter-val="Targeted Offer" onclick="filterRaid('track','Targeted Offer',this)">Targeted Offer</span>
+  </div>
+
+  <div class="raid-metrics-row" id="raidMetrics"></div>
+  <div id="raidCards" style="margin-bottom:20px"></div>
+
+  <div class="footer">Auto-refreshed from Smartsheet &middot; Last sync: April 27, 2026</div>
+</div>
+
+
+<script>
+const SHEET_URL = 'https://app.smartsheet.com/sheets/3XFh8vH6VwcrWhH2Jw54J44hMX5G7JXfHmGQX8x1?view=grid';
+const REPORT_URL = 'https://app.smartsheet.com/reports/28GJqHp9WPXjVVpVW694m2g3wGFJvmW2pmJ62PJ1?view=grid';
+const WORKBACK_URL = 'https://app.smartsheet.com/sheets/Cp4Qgx29hwrr337mP5vGcqG8g6XPFWCMQWGgqfX1';
+const MS_OPEX_DATA = [{"label": "May 4th (9 fixes)", "go_live": "Apr 30", "tasks": [{"id": "MS_OPEX_001", "step": "Dev Complete", "driver": "", "start": "2026-04-23", "end": "2026-04-27", "status": "In Progress", "milestone": false}, {"id": "MS_OPEX_002", "step": "E2E Test Complete", "driver": "", "start": "2026-04-27", "end": "2026-04-29", "status": "In Progress", "milestone": false}, {"id": "MS_OPEX_003", "step": "Prod Test Complete", "driver": "", "start": "2026-04-30", "end": "2026-04-30", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_004", "step": "Go Live", "driver": "", "start": "2026-04-30", "end": "2026-04-30", "status": "Not Started", "milestone": true}, {"id": "MS_OPEX_005", "step": "Validate Success Metrics", "driver": "", "start": "2026-05-01", "end": "2026-05-08", "status": "Not Started", "milestone": false}]}, {"label": "May 11 (3 fixes)", "go_live": "May 7", "tasks": [{"id": "MS_OPEX_006", "step": "Dev Complete", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_007", "step": "E2E Test Complete", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_008", "step": "Prod Test Complete", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_009", "step": "Go Live", "driver": "", "start": "", "end": "2026-05-07", "status": "Not Started", "milestone": true}, {"id": "MS_OPEX_010", "step": "Validate Success Metrics", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}]}, {"label": "May 18 (4 fixes)", "go_live": "May 14", "tasks": [{"id": "MS_OPEX_011", "step": "Dev Complete", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_012", "step": "E2E Test Complete", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_013", "step": "Prod Test Complete", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_014", "step": "Go Live", "driver": "", "start": "", "end": "2026-05-14", "status": "Not Started", "milestone": true}, {"id": "MS_OPEX_015", "step": "Validate Success Metrics", "driver": "", "start": "", "end": "", "status": "Not Started", "milestone": false}]}, {"label": "MAY 21 RELEASE", "go_live": "May 21", "tasks": [{"id": "MS_OPEX_016", "step": "Dev Complete", "driver": "Gokul Sarangapani", "start": "2026-05-14", "end": "2026-05-18", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_017", "step": "E2E Test Complete", "driver": "Gokul Sarangapani", "start": "2026-05-18", "end": "2026-05-20", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_018", "step": "Prod Test Complete", "driver": "Gokul Sarangapani", "start": "2026-05-21", "end": "2026-05-21", "status": "Not Started", "milestone": false}, {"id": "MS_OPEX_019", "step": "Go Live", "driver": "Gokul Sarangapani", "start": "2026-05-21", "end": "2026-05-21", "status": "Not Started", "milestone": true}, {"id": "MS_OPEX_020", "step": "Validate Success Metrics", "driver": "Gokul Sarangapani", "start": "2026-05-22", "end": "2026-05-28", "status": "Not Started", "milestone": false}]}];
+const RAID_FULL_DATA = [{"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Add Shika to the Change Orders meeting to capture Maria's fast-follow requirements", "owner": "Prateeksha Chunkhare", "due": "2026-04-23", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Add two ops debt line items to the Fallow deck (WebOps and homes/pricing ops)", "owner": "Prateeksha Chunkhare", "due": "2026-04-24", "status": "Open", "priority": "Medium"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Ask Rihanna to add Maria and Sujata to weekly Fallow meeting; expand meeting to 1 hour", "owner": "Priyank Bansal", "due": "2026-05-06", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Attend daily convergence war room; find secondary working contact beyond Gaurav (suggest Rohit)", "owner": "Nisarg Trivedi", "due": "2026-04-23", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Be available for follow-up calls with Neeraj to address further questions on UI/UX for bulk and content edits", "owner": "Bharatkumar .", "due": "", "status": "Open", "priority": "Medium"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Check with Bharat/John whether Janice is aligned on the 5-day UAT timeline; flag as risk if not", "owner": "Nisarg Trivedi", "due": "2026-04-24", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Clarify Pricing JSON status with Deepak Yadav at tomorrow's meeting", "owner": "Priyank Bansal", "due": "2026-04-24", "status": "Open", "priority": "Medium"}, {"type": "Decision", "workstream": "MS", "item": "Close the decision on PPM being part of convergence and accepting SOX implications for MS.", "owner": "Rajat Khare", "due": "2026-05-10", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Complete plan to cover all permutations of attribute changes in the UI within the next 10 days of coding", "owner": "Neeraj Gang", "due": "2026-05-05", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Conduct 30-minute review session with marketing operations team to ensure the new system does not replicate existing bulk edit issues", "owner": "Priyank Bansal", "due": "2026-04-28", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Confirm RoW country mapping in SFDC Wholesale Offers", "owner": "Ali Navvab-Safavi", "due": "2026-04-24", "status": "Not Started", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Confirm with Poon that the change order solution pre-read is sent out by Friday for Monday's product review", "owner": "Prateeksha Chunkhare", "due": "2026-04-24", "status": "In Progress", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Create and share a refined mock/working version of the new widget/publishing experience in Marketing Studio", "owner": "Atul Joshi", "due": "2026-05-08", "status": "In Progress", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Develop UAT test cases for Change Orders", "owner": "Bharatkumar", "due": "2026-04-25", "status": "Not Started", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Explore earlier UAT start if dev is done by 5/15", "owner": "Priyank Bansal", "due": "2026-05-15", "status": "Not Started", "priority": "Medium"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Follow up with Gokul on XD design spec (due April 23, no response received)", "owner": "Nisarg Trivedi", "due": "2026-04-24", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "MS", "item": "Follow up with Steve on Taxonomy workstream", "owner": "Priyank Bansal", "due": "2026-04-30", "status": "Not Started", "priority": "Medium"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Forward Monday product review invite to Prateeksha and Nisarg", "owner": "Priyank Bansal", "due": "2026-04-23", "status": "Open", "priority": "Medium"}, {"type": "Action Item", "workstream": "R0_Stability", "item": "Gokul to provide the week-over-week bug-fix plan and the week-over-week stability improvement projections for Marketing Studio.", "owner": "Gokul Sarangapani", "due": "2026-04-27", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "MS Convergence", "item": "Host 30-min MS Convergence demo", "owner": "Priyank Bansal", "due": "2026-04-28", "status": "Not Started", "priority": "High"}, {"type": "Risk", "workstream": "MS Convergence", "item": "IDS Component Migration", "owner": "Gaurav Misra", "due": "", "status": "Open", "priority": "Medium"}, {"type": "Risk", "workstream": "MS", "item": "Join Insights Repository meeting with Bharat", "owner": "Riana Katz", "due": "2026-04-23", "status": "Not Started", "priority": "Medium"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Partner with users to document end-to-end UAT scenarios in parallel with development", "owner": "Bharatkumar .", "due": "2026-05-06", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Prepare status update for tomorrow's Fallow meeting covering Targeted Offer + Change Orders", "owner": "Prateeksha Chunkhare", "due": "2026-04-24", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Review and consider long-term value and maintenance overhead of current UI/UX approach vs. agent-driven, draft-first workflow", "owner": "Rajat Khare", "due": "", "status": "Open", "priority": "Low"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Review IXP MCP work and create a WBS template; share with Poon and all 7 MCP owners with July 15 as target date", "owner": "Ali Navvab-Safavi", "due": "2026-04-24", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Review list of known issues from previous bulk edit implementations in Campaign Manager", "owner": "Full Team", "due": "2026-04-27", "status": "Open", "priority": "High"}, {"type": "Action Item", "workstream": "Targeted Offer", "item": "Revisit Targeted Offers items 3 & 4 post 30/60/90 milestones", "owner": "Bharatkumar", "due": "", "status": "Not Started", "priority": "Medium"}, {"type": "Action Item", "workstream": "MC context ingestion", "item": "Set up call with Riana Katz on Mailchimp context ingestion testing", "owner": "Suramya Gupta", "due": "2026-04-24", "status": "Not Started", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Share convergence document as pre-read to stakeholders", "owner": "Bharatkumar .", "due": "2026-04-29", "status": "Open", "priority": "High"}, {"type": "Risk", "workstream": "R2_Chg_Order_MVP", "item": "Share SFDC Wholesale Offers delivery timeline", "owner": "Ali Navvab-Safavi", "due": "2026-04-23", "status": "Not Started", "priority": "High"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Share user guide / PR FAQ with example prompts and suggestions for users during the testing phase", "owner": "Bharatkumar .", "due": "2026-05-08", "status": "Open", "priority": "Medium"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Slack Ali the full list of 7 MCPs and their respective owners", "owner": "Priyank Bansal", "due": "2026-04-23", "status": "Open", "priority": "High"}, {"type": "Risk", "workstream": "MS Convergence", "item": "Taxonomy", "owner": "Gaurav Misra", "due": "", "status": "Open", "priority": "Medium"}, {"type": "Action Item", "workstream": "R2_Chg_Order_MVP", "item": "Work with users to list all UAT scenarios and test cases for Change Orders", "owner": "Bharatkumar .", "due": "2026-05-08", "status": "Open", "priority": "High"}, {"type": "Risk", "workstream": "MS Convergence", "item": "XD visual design/ IDS Component theme update", "owner": "Atul Joshi", "due": "", "status": "Open", "priority": "Medium"}];
+const MS_CONV_SS_URL = 'https://app.smartsheet.com/sheets/WcJRFcqhF6qJR8fHWMjJ5Jx99q8qrCvxFFg3Pc41';
+const CO_WBS_SS_URL  = 'https://app.smartsheet.com/sheets/vp5r93RjCf9QvVPw38mJM627Xg66gVPpFwR97Rh1';
+const msConvData  = {"groups": [{"name": "Code Completion", "tasks": [{"task": "CM Converged", "owner": "Gaurav Misra", "status": "completed", "date": "4/17/2026"}, {"task": "P0 Common Foundations, Search (not US)", "owner": "Gaurav Misra", "status": "completed", "date": "4/17/2026"}, {"task": "PPM Converged, IXP Widgets, Quality & Opex", "owner": "Gaurav Misra", "status": "inProgress", "date": "4/23/2026"}], "counts": {"completed": 2, "inProgress": 1, "notStarted": 0, "blocked": 0}}, {"name": "E2E Test Scenarios", "tasks": [{"task": "CM Use-cases by PM", "owner": "Nathan Guy", "status": "completed", "date": "4/20/2026"}, {"task": "E2E Convergence PD Testing Use-cases", "owner": "Gaurav Mehta", "status": "inProgress", "date": "4/16/2026"}, {"task": "E2E Cross flow use-cases by PM", "owner": "Bharatkumar", "status": "inProgress", "date": "4/26/2026"}, {"task": "IXP Use-cases by PM", "owner": "Suji Thangavel", "status": "inProgress", "date": "4/24/2026"}, {"task": "PPM Use-cases by PM", "owner": "Shikha Tikku", "status": "completed", "date": "4/23/2026"}], "counts": {"completed": 2, "inProgress": 3, "notStarted": 0, "blocked": 0}}, {"name": "E2E Testing Execution", "tasks": [{"task": "E2E PD Testing", "owner": "Gaurav Misra", "status": "notStarted", "date": "4/30/2026"}, {"task": "E2E PM Testing: CM", "owner": "Nathan Guy", "status": "inProgress", "date": "4/27/2026"}, {"task": "E2E PM Testing: Cross flow - CM, PPM, IXP", "owner": "Bharatkumar", "status": "inProgress", "date": "4/29/2026"}, {"task": "E2E PM Testing: IXP", "owner": "Suji Thangavel", "status": "inProgress", "date": "4/27/2026"}, {"task": "E2E PM Testing: PPM", "owner": "Shikha Tikku", "status": "inProgress", "date": "4/27/2026"}], "counts": {"completed": 0, "inProgress": 4, "notStarted": 1, "blocked": 0}}, {"name": "PM Use-cases", "tasks": [{"task": "All Use-Cases for testing PM", "owner": "Bharatkumar", "status": "inProgress", "date": "4/13/2026"}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 0, "blocked": 0}}, {"name": "Post Launch Activities", "tasks": [{"task": "Post Launch Monitoring", "owner": "Gaurav Misra", "status": "notStarted", "date": "5/15/2026"}, {"task": "Success Metrics Evaluation", "owner": "Bharatkumar", "status": "notStarted", "date": "5/29/2026"}], "counts": {"completed": 0, "inProgress": 0, "notStarted": 2, "blocked": 0}}, {"name": "Prod Deployment & Testing", "tasks": [{"task": "GTMT PM Testing execution signoff", "owner": "Shikha Tikku, Nathan Guy, Suji Thangavel", "status": "notStarted", "date": ""}, {"task": "Production Deployment", "owner": "Gaurav Misra", "status": "notStarted", "date": "5/1/2026"}, {"task": "Production Testing - PD, PM", "owner": "Gaurav Misra", "status": "notStarted", "date": "5/8/2026"}, {"task": "UAT", "owner": "MOPs, Bharatkumar", "status": "notStarted", "date": "5/8/2026"}, {"task": "UAT - Test Cases", "owner": "Bharatkumar", "status": "inProgress", "date": "4/30/2026"}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 4, "blocked": 0}}, {"name": "Prod Launch", "tasks": [{"task": "Go Live - P0 Common Foundations, Search, CM, PPM, IXP", "owner": "Gaurav Misra", "status": "notStarted", "date": "5/11/2026"}], "counts": {"completed": 0, "inProgress": 0, "notStarted": 1, "blocked": 0}}, {"name": "Solution Design", "tasks": [{"task": "Complete Solutioning for all in scope work", "owner": "Gaurav Misra", "status": "completed", "date": "4/3/2026"}], "counts": {"completed": 1, "inProgress": 0, "notStarted": 0, "blocked": 0}}, {"name": "XD Figma", "tasks": [{"task": "MS Convergence visual design specification", "owner": "Atul Joshi", "status": "blocked", "date": "4/23/2026"}, {"task": "MS Target State presentation", "owner": "Anirudh Moudgal", "status": "inProgress", "date": "4/21/2026"}, {"task": "Unified Search - fast follow", "owner": "Anirudh Moudgal", "status": "notStarted", "date": ""}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 1, "blocked": 1}}], "totals": {"completed": 5, "inProgress": 11, "notStarted": 9, "blocked": 1}};
+const coWbsData   = {"groups": [{"name": "Mini-PRD / Scope Doc", "tasks": [{"task": "1. Define scope of work (in scope/out of scope)", "owner": "Bharatkumar", "status": "completed", "date": ""}, {"task": "1. Define scope of work (in scope/out of scope)", "owner": "Bharatkumar", "status": "inProgress", "date": "4/27/2026"}], "counts": {"completed": 1, "inProgress": 1, "notStarted": 0, "blocked": 0}}, {"name": "XD Figma", "tasks": [{"task": "XD Figma", "owner": "Atul Joshi", "status": "completed", "date": "2/11/2026"}], "counts": {"completed": 1, "inProgress": 0, "notStarted": 0, "blocked": 0}}, {"name": "Solution Design", "tasks": [{"task": "Complete Solutioning for all in scope work", "owner": "Srinivas Kommu", "status": "inProgress", "date": "4/24/2026"}, {"task": "Complete Solution walkthrough", "owner": "Srinivas Kommu", "status": "inProgress", "date": "4/27/2026"}, {"task": "Complete Solutioning for all in scope work", "owner": "NEERAJ GANG", "status": "inProgress", "date": "4/30/2026"}], "counts": {"completed": 0, "inProgress": 3, "notStarted": 0, "blocked": 0}}, {"name": "Code Completion", "tasks": [{"task": "Audience Agent", "owner": "Kumaran Gowthaman", "status": "inProgress", "date": "4/30/2026"}, {"task": "Campaign Agent", "owner": "Abhay Kumar Singh", "status": "inProgress", "date": "5/8/2026"}, {"task": "Campaing Manager Versioning - Update Offers Bulk API", "owner": "Minal Bhalodi", "status": "notStarted", "date": "5/13/2026"}, {"task": "Campaing Manager Versioning - Link Offer Treatments API", "owner": "Minal Bhalodi", "status": "notStarted", "date": "5/13/2026"}, {"task": "Campaing Manager Versioning - UnLink Offer Treatments API", "owner": "Minal Bhalodi", "status": "notStarted", "date": "5/13/2026"}, {"task": "Campaing Manager Versioning - Create Bulk", "owner": "NEERAJ GANG", "status": "inProgress", "date": "5/11/2026"}, {"task": "Search API with pagination to support (ph1 scope)", "owner": "NEERAJ GANG", "status": "inProgress", "date": "5/8/2026"}, {"task": "Enhanced GetOfferVersionsByIds", "owner": "Minal Bhalodi", "status": "notStarted", "date": "5/15/2026"}, {"task": "Integrations for Update API", "owner": "Abhay Kumar Singh", "status": "notStarted", "date": "5/13/2026"}, {"task": "UI Workflow", "owner": "Sunil Naik", "status": "notStarted", "date": "5/15/2026"}, {"task": "UI Workflow Integrations", "owner": "Sunil Naik", "status": "notStarted", "date": "5/13/2026"}, {"task": "Campaing Manager Search - Cache", "owner": "Firdosh Alia", "status": "inProgress", "date": "5/15/2026"}, {"task": "Campaing Manager Search - Data Backfill", "owner": "Firdosh Alia", "status": "notStarted", "date": "5/15/2026"}, {"task": "Campaing Manager Search - All CRUD APIs", "owner": "NEERAJ GANG", "status": "notStarted", "date": "5/15/2026"}, {"task": "Campaing Manager Search - Agent/API/MCP", "owner": "NEERAJ GANG", "status": "notStarted", "date": "5/15/2026"}, {"task": "Campaing Manager Search - UI integrations", "owner": "NEERAJ GANG", "status": "notStarted", "date": "5/15/2026"}, {"task": "Marketing Studio - UI Workflows", "owner": "Sunil Naik", "status": "notStarted", "date": "5/15/2026"}, {"task": "Campaign Management Agent - MCP Integrations", "owner": "NEERAJ GANG", "status": "notStarted", "date": "5/15/2026"}], "counts": {"completed": 0, "inProgress": 5, "notStarted": 13, "blocked": 0}}, {"name": "Integration Testing", "tasks": [{"task": "Integration testing of all workflows", "owner": "Abhay Kumar Singh", "status": "notStarted", "date": "5/15/2026"}, {"task": "Integration testing sign off", "owner": "Srinivas Kommu", "status": "inProgress", "date": "5/15/2026"}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 1, "blocked": 0}}, {"name": "E2E Testing", "tasks": [{"task": "E2E Test Scenarios (documenting test cases)", "owner": "Bharatkumar", "status": "inProgress", "date": "5/5/2026"}, {"task": "E2E Test Scenarios", "owner": "Bharatkumar", "status": "notStarted", "date": "5/4/2026"}, {"task": "Test case review with Stakeholders", "owner": "Bharatkumar", "status": "notStarted", "date": "5/8/2026"}, {"task": "Integration/E2E Testing", "owner": "Abhay Kumar Singh", "status": "notStarted", "date": "5/22/2026"}, {"task": "UAT - Testing (PM)", "owner": "Bharatkumar", "status": "notStarted", "date": "5/28/2026"}, {"task": "UAT (Stakeholders)", "owner": "Bharatkumar", "status": "notStarted", "date": "5/27/2026"}, {"task": "E2E Testing", "owner": "NEERAJ GANG", "status": "notStarted", "date": "5/29/2026"}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 6, "blocked": 0}}, {"name": "Prod Launch", "tasks": [{"task": "Deploymenet (CM/Agents/UI)", "owner": "Srinivas Kommu", "status": "notStarted", "date": "5/28/2026"}, {"task": "Toggle Enablements", "owner": "Srinivas Kommu", "status": "notStarted", "date": "5/28/2026"}, {"task": "Production Sanity Testing", "owner": "Srinivas Kommu", "status": "notStarted", "date": "5/28/2026"}, {"task": "Deployment", "owner": "NEERAJ GANG", "status": "notStarted", "date": "6/12/2026"}, {"task": "Production Sanity Testing", "owner": "Bharatkumar", "status": "notStarted", "date": "6/15/2026"}], "counts": {"completed": 0, "inProgress": 0, "notStarted": 5, "blocked": 0}}, {"name": "Post Launch Activities", "tasks": [{"task": "Post Launch Monitoring", "owner": "Srinivas Kommu", "status": "notStarted", "date": "5/29/2026"}, {"task": "Post Launched Message", "owner": "Bharatkumar", "status": "notStarted", "date": "5/30/2026"}, {"task": "Sucess Metrics Evaluation", "owner": "Bharatkumar", "status": "notStarted", "date": "6/5/2026"}, {"task": "Post Launch Monitoring", "owner": "Bharatkumar", "status": "notStarted", "date": "6/15/2026"}, {"task": "Sucess Metrics Evaluation", "owner": "Bharatkumar", "status": "notStarted", "date": "6/19/2026"}], "counts": {"completed": 0, "inProgress": 0, "notStarted": 5, "blocked": 0}}, {"name": "Figma", "tasks": [{"task": "Figma for Search and Bulk Edit", "owner": "Atul Joshi", "status": "completed", "date": "2/11/2026"}], "counts": {"completed": 1, "inProgress": 0, "notStarted": 0, "blocked": 0}}, {"name": "PM Use-cases", "tasks": [{"task": "All Use-Cases for testing PM", "owner": "Bharatkumar", "status": "inProgress", "date": ""}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 0, "blocked": 0}}, {"name": "UAT Testing", "tasks": [{"task": "UAT - Test Cases", "owner": "Bharatkumar", "status": "inProgress", "date": "5/7/2026"}, {"task": "UAT - Test Case Sign Off", "owner": "Bharatkumar", "status": "notStarted", "date": "5/7/2026"}, {"task": "UAT - PM & Marketing Ops", "owner": "Bharatkumar", "status": "notStarted", "date": "6/5/2026"}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 2, "blocked": 0}}], "totals": {"completed": 3, "inProgress": 13, "notStarted": 32, "blocked": 0}};
+const to2WbsData  = {"groups": [{"name": "Capability Matrix \u2013 Knowledge Base (30d)", "tasks": [{"task": "Working Session \u2013 Q3/Q4 Campaign Review", "owner": "Rakesh, Subhra, Janice, Kristin", "status": "completed", "date": "3/6/2026"}], "counts": {"completed": 1, "inProgress": 0, "notStarted": 0, "blocked": 0}}, {"name": "Proactive GTM Tech Attribute Onboarding (30d)", "tasks": [{"task": "Analysis", "owner": "Rakesh, Subhra", "status": "completed", "date": "3/17/2026"}], "counts": {"completed": 1, "inProgress": 0, "notStarted": 0, "blocked": 0}}, {"name": "Capability GAP \u2013 Building Capability (60d)", "tasks": [{"task": "Extended Sales Channel Attribute (Etsy Campaign)", "owner": "Akhil Verma", "status": "inProgress", "date": "4/24/2026"}, {"task": "Partner Attribute Onboarding to CDC (Etsy)", "owner": "Akhil Verma", "status": "inProgress", "date": "4/24/2026"}, {"task": "Composite Action", "owner": "Subhra, Rakesh", "status": "inProgress", "date": ""}, {"task": "Seamless Onboarding of Product to CM", "owner": "Rakesh, Subhra", "status": "inProgress", "date": ""}], "counts": {"completed": 0, "inProgress": 4, "notStarted": 0, "blocked": 0}}, {"name": "Campaign Simplification Ph0: File Upload (30d)", "tasks": [{"task": "Requirements & Solution", "owner": "", "status": "completed", "date": ""}, {"task": "UX / Solution / Review", "owner": "", "status": "completed", "date": ""}, {"task": "Development", "owner": "", "status": "completed", "date": ""}, {"task": "Testing", "owner": "", "status": "completed", "date": ""}, {"task": "Launch", "owner": "", "status": "completed", "date": ""}], "counts": {"completed": 5, "inProgress": 0, "notStarted": 0, "blocked": 0}}, {"name": "Campaign Simplification Ph1: Create (30d)", "tasks": [{"task": "Requirements & Solution", "owner": "", "status": "completed", "date": "3/4/2026"}, {"task": "UX / Solution / Review", "owner": "", "status": "completed", "date": "3/4/2026"}, {"task": "Development", "owner": "", "status": "completed", "date": "3/6/2026"}, {"task": "Testing", "owner": "Anoop Devadiga", "status": "completed", "date": "3/19/2026"}, {"task": "User Feedback", "owner": "Anoop Devadiga", "status": "completed", "date": "3/12/2026"}, {"task": "Launch", "owner": "Anoop Devadiga", "status": "completed", "date": "3/27/2026"}], "counts": {"completed": 6, "inProgress": 0, "notStarted": 0, "blocked": 0}}, {"name": "Campaign Simplification Ph2: Edit (60d)", "tasks": [{"task": "Development", "owner": "", "status": "inProgress", "date": "4/17/2026"}, {"task": "Testing", "owner": "", "status": "notStarted", "date": "4/24/2026"}, {"task": "Launch", "owner": "", "status": "notStarted", "date": "4/29/2026"}], "counts": {"completed": 0, "inProgress": 1, "notStarted": 2, "blocked": 0}}, {"name": "Campaign Simplification Ph3: IXP Widget (90d)", "tasks": [{"task": "Campaign Simplification Ph3: IXP Widget (90d)", "owner": "Ponmurugesh P", "status": "notStarted", "date": ""}], "counts": {"completed": 0, "inProgress": 0, "notStarted": 1, "blocked": 0}}], "totals": {"completed": 13, "inProgress": 5, "notStarted": 3, "blocked": 0}};
+const MS_CONV_PIPELINE = [{"id": "Rel1_SD", "step": "Solution Design", "driver": "Gaurav Misra", "start": "", "end": "2026-04-03", "status": "Completed", "milestone": false, "tasks": 1, "detail": "Complete solutioning for all in-scope work"}, {"id": "Rel1_XD", "step": "XD Figma", "driver": "Atul Joshi", "start": "", "end": "2026-04-23", "status": "Blocked", "milestone": false, "tasks": 3, "detail": "Visual design spec \u2014 BLOCKED on IDS components"}, {"id": "Rel1_PM", "step": "PM Use-cases", "driver": "Bharatkumar", "start": "", "end": "2026-04-13", "status": "In Progress", "milestone": false, "tasks": 1, "detail": "All use-cases for PM testing"}, {"id": "Rel1_CC", "step": "Code Completion", "driver": "Gaurav Misra", "start": "", "end": "2026-04-23", "status": "In Progress", "milestone": false, "tasks": 3, "detail": "2 of 3 complete \u00b7 PPM/IXP Widgets in progress"}, {"id": "Rel1_E2E", "step": "E2E Testing", "driver": "Multiple", "start": "", "end": "2026-04-30", "status": "In Progress", "milestone": false, "tasks": 10, "detail": "Test scenarios + execution \u00b7 4 of 10 complete"}, {"id": "Rel1_PD", "step": "Prod Deployment", "driver": "Gaurav Misra", "start": "", "end": "2026-05-08", "status": "Not Started", "milestone": false, "tasks": 5, "detail": "Production deploy \u00b7 UAT \u00b7 PM testing"}, {"id": "Rel1_025", "step": "Go Live", "driver": "Gaurav Misra", "start": "", "end": "2026-05-11", "status": "Not Started", "milestone": true, "tasks": 1, "detail": "P0 \u00b7 CM \u00b7 PPM \u00b7 IXP convergence"}, {"id": "Rel1_PL", "step": "Post Launch", "driver": "Bharatkumar", "start": "", "end": "2026-05-29", "status": "Not Started", "milestone": false, "tasks": 2, "detail": "Monitoring + Success Metrics evaluation"}];
+const CO_PIPELINE = {"ph1": [{"id": "Rel3_FIG", "step": "Figma / Design", "driver": "Atul Joshi", "start": "2026-01-05", "end": "2026-02-11", "status": "Completed", "milestone": false, "tasks": 1, "detail": "Figma for Search and Bulk Edit"}, {"id": "Rel3_PRD", "step": "Mini-PRD / Scope", "driver": "Bharatkumar", "start": "", "end": "2026-04-27", "status": "Completed", "milestone": false, "tasks": 1, "detail": "Define scope of work (in/out of scope)"}, {"id": "Rel3_SD", "step": "Solution Design", "driver": "Srinivas Kommu", "start": "", "end": "2026-04-27", "status": "In Progress", "milestone": false, "tasks": 3, "detail": "Solutioning + walkthrough in progress"}, {"id": "Rel3_PM", "step": "PM Use-cases", "driver": "Bharatkumar", "start": "", "end": "", "status": "In Progress", "milestone": false, "tasks": 1, "detail": "All use-cases for PM testing"}, {"id": "Rel3_UAT", "step": "UAT Test Cases", "driver": "Bharatkumar", "start": "", "end": "2026-05-07", "status": "In Progress", "milestone": false, "tasks": 2, "detail": "UAT test cases + stakeholder sign-off"}, {"id": "Rel3_CC", "step": "Code Completion", "driver": "Multiple", "start": "2026-04-22", "end": "2026-05-15", "status": "In Progress", "milestone": false, "tasks": 14, "detail": "API \u00b7 UI Workflows \u00b7 Agents (multiple in progress)"}, {"id": "Rel3_E2E", "step": "E2E Testing", "driver": "Bharatkumar", "start": "2026-04-22", "end": "2026-05-29", "status": "In Progress", "milestone": false, "tasks": 7, "detail": "Test scenarios + execution + UAT"}, {"id": "Rel3_INT", "step": "Integration Testing", "driver": "Abhay Kumar Singh", "start": "2026-05-13", "end": "2026-05-15", "status": "In Progress", "milestone": false, "tasks": 2, "detail": "Integration testing + sign-off"}, {"id": "Rel3_025", "step": "Prod Launch", "driver": "Srinivas Kommu", "start": "", "end": "2026-05-28", "status": "Not Started", "milestone": true, "tasks": 3, "detail": "Deployment \u00b7 Toggle Enablements \u00b7 Sanity testing"}, {"id": "Rel3_PL1", "step": "Post Launch", "driver": "Bharatkumar", "start": "2026-05-29", "end": "2026-06-05", "status": "Not Started", "milestone": false, "tasks": 3, "detail": "Monitoring \u00b7 Announcement \u00b7 Metrics evaluation"}], "ph2": [{"id": "Rel3_PRD2", "step": "Mini-PRD / Scope", "driver": "Bharatkumar", "start": "2026-04-22", "end": "2026-04-27", "status": "In Progress", "milestone": false, "tasks": 1, "detail": "Define scope of work (Ph2)"}, {"id": "Rel3_SD2", "step": "Solution Design", "driver": "TBD", "start": "", "end": "", "status": "Not Started", "milestone": false, "tasks": 0, "detail": "To be defined"}, {"id": "Rel3_CC2", "step": "Code Completion", "driver": "Multiple", "start": "", "end": "2026-05-15", "status": "Not Started", "milestone": false, "tasks": 9, "detail": "Search \u00b7 Agents \u00b7 MCP integrations"}, {"id": "Rel3_UAT2", "step": "UAT Testing", "driver": "Bharatkumar", "start": "", "end": "2026-06-05", "status": "Not Started", "milestone": false, "tasks": 1, "detail": "PM & Marketing Ops UAT"}, {"id": "Rel3_026", "step": "Prod Launch", "driver": "Neeraj Gang", "start": "2026-06-12", "end": "2026-06-15", "status": "Not Started", "milestone": true, "tasks": 2, "detail": "Deployment + Production Sanity testing"}, {"id": "Rel3_PL2", "step": "Post Launch", "driver": "Bharatkumar", "start": "2026-06-15", "end": "2026-06-19", "status": "Not Started", "milestone": false, "tasks": 2, "detail": "Monitoring + Success Metrics evaluation"}]};
+const TO_PIPELINE = [
+  { id:'TO_RM',  step:'Roadmap',           driver:'Pon Murugesh',  start:'2026-04-28', end:'2026-05-15', status:'In Progress', milestone:false, tasks:1, detail:'Program roadmap definition — in progress' },
+  { id:'TO_BU',  step:'BU Use-cases',      driver:'Pon Murugesh',  start:'2026-04-20', end:'2026-05-08', status:'Not Started',  milestone:false, tasks:1, detail:'Business unit use-case definition' },
+  { id:'TO_PRD', step:'PRD / Scope Doc',   driver:'Abhinit',       start:'2026-05-04', end:'2026-05-08', status:'Not Started',  milestone:false, tasks:1, detail:'Requirements & scope documentation' },
+  { id:'TO_XD',  step:'XD Figma',          driver:'Abhinit',       start:'2026-05-11', end:'2026-05-18', status:'Not Started',  milestone:false, tasks:1, detail:'UX design & Figma specs' },
+  { id:'TO_SD',  step:'Solution Design',   driver:'Abhinit',       start:'2026-05-18', end:'2026-05-29', status:'Not Started',  milestone:false, tasks:1, detail:'Technical solution design & architecture' },
+  { id:'TO_CC',  step:'Code Completion',   driver:'Abhinit',       start:'2026-06-01', end:'2026-06-26', status:'Not Started',  milestone:false, tasks:1, detail:'Full development implementation' },
+  { id:'TO_E2E', step:'E2E Testing',       driver:'Pon Murugesh',  start:'2026-06-22', end:'2026-07-07', status:'Not Started',  milestone:false, tasks:2, detail:'E2E test scenarios + execution' },
+  { id:'TO_UAT', step:'UAT',               driver:'Pon Murugesh',  start:'2026-07-01', end:'2026-07-13', status:'Not Started',  milestone:false, tasks:1, detail:'User acceptance testing' },
+  { id:'TO_GL',  step:'Go Live',           driver:'Pon / Abhinit', start:'2026-07-15', end:'2026-07-15', status:'Not Started',  milestone:true,  tasks:1, detail:'Targeted Offer in Marketing Studio — launch' },
+];
+const TO2_PHASES = [{"id": "ph0", "num": "2.0", "label": "Ph0", "name": "File Upload", "duration": "30d", "end": "Mar 27, 2026", "status": "Completed", "tasks": [{"task": "Requirements & Solution", "owner": "Ponmurugesh P", "status": "Completed", "start": "Feb 23", "end": "Mar 4", "indent": 0}, {"task": "UX / Solution / Review", "owner": "Ponmurugesh P", "status": "Completed", "start": "Feb 23", "end": "Mar 4", "indent": 0}, {"task": "Development", "owner": "Ponmurugesh P", "status": "Completed", "start": "Feb 23", "end": "Mar 6", "indent": 0}, {"task": "Testing", "owner": "Ponmurugesh P", "status": "Completed", "start": "Mar 4", "end": "Mar 19", "indent": 0}, {"task": "User Feedback", "owner": "Ponmurugesh P", "status": "Completed", "start": "Mar 6", "end": "Mar 12", "indent": 0}, {"task": "Launch", "owner": "Ponmurugesh P", "status": "Completed", "start": "Mar 20", "end": "Mar 27", "indent": 0}]}, {"id": "ph1", "num": "2.1", "label": "Ph1", "name": "Create", "duration": "30d", "end": "Mar 27, 2026", "status": "Completed", "tasks": [{"task": "Requirements & Solution", "owner": "Anoop Devadiga", "status": "Completed", "start": "Feb 23", "end": "Mar 4", "indent": 0}, {"task": "UX / Solution / Review", "owner": "Anoop Devadiga", "status": "Completed", "start": "Feb 23", "end": "Mar 4", "indent": 0}, {"task": "Development", "owner": "Anoop Devadiga", "status": "Completed", "start": "Feb 23", "end": "Mar 6", "indent": 0}, {"task": "Testing", "owner": "Anoop Devadiga", "status": "Completed", "start": "Mar 4", "end": "Mar 19", "indent": 0}, {"task": "User Feedback", "owner": "Anoop Devadiga", "status": "Completed", "start": "Mar 6", "end": "Mar 12", "indent": 0}, {"task": "Launch", "owner": "Anoop Devadiga", "status": "Completed", "start": "Mar 20", "end": "Mar 27", "indent": 0}]}, {"id": "ph2", "num": "2.2", "label": "Ph2", "name": "Edit", "duration": "60d", "end": "Apr 29, 2026", "status": "In Progress", "tasks": [{"task": "Development", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Mar 31", "end": "Apr 17", "indent": 0}, {"task": "Campaign Edit Flow", "owner": "Ponmurugesh P", "status": "Completed", "start": "Mar 31", "end": "Apr 3", "indent": 1}, {"task": "Campaign Versioning Support", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Apr 1", "end": "Apr 17", "indent": 1}, {"task": "CDP Audience & IRP Link Capture", "owner": "Ponmurugesh P", "status": "Completed", "start": "Apr 6", "end": "Apr 14", "indent": 1}, {"task": "Broadly Available Campaign", "owner": "Ponmurugesh P", "status": "Not Started", "start": "Apr 3", "end": "Apr 14", "indent": 1}, {"task": "Bulk Edit Support", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Apr 6", "end": "Apr 14", "indent": 1}, {"task": "Users Feedback Incorporation", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Apr 9", "end": "Apr 14", "indent": 1}, {"task": "Testing", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Apr 14", "end": "Apr 24", "indent": 0}, {"task": "QAL - Functional Testing", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Apr 14", "end": "Apr 16", "indent": 1}, {"task": "E2E - Integration Testing", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Apr 17", "end": "Apr 21", "indent": 1}, {"task": "E2E - UAT", "owner": "Ponmurugesh P", "status": "Not Started", "start": "Apr 21", "end": "Apr 23", "indent": 1}, {"task": "E2E - Regression Testing", "owner": "Ponmurugesh P", "status": "In Progress", "start": "Apr 22", "end": "Apr 24", "indent": 1}, {"task": "Launch", "owner": "Ponmurugesh P", "status": "Not Started", "start": "Apr 27", "end": "Apr 29", "indent": 0}, {"task": "Deployment", "owner": "Ponmurugesh P", "status": "Not Started", "start": "Apr 27", "end": "Apr 27", "indent": 1}, {"task": "Toggle Enable & Monitor", "owner": "Ponmurugesh P", "status": "Not Started", "start": "Apr 27", "end": "Apr 27", "indent": 1}, {"task": "Operations - Testing", "owner": "Ponmurugesh P", "status": "Not Started", "start": "Apr 27", "end": "Apr 29", "indent": 1}]}, {"id": "ph3", "num": "2.3", "label": "Ph3", "name": "IXP", "duration": "90d", "end": "TBD", "status": "Not Started", "tasks": []}];
+
+function showTab(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+/* ── ACTION ITEMS ── */
+const PALETTE = ['#4f46e5','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#be185d','#6366f1','#0e7490','#7e22ce','#b45309'];
+const owners = [{"name": "Prateeksha Chunkhare", "total": 4, "overdue": 4, "overdueDetail": "4 overdue \u2014 Add Shika to the Change Orders meeting to capture \u2026", "items": [{"t": "Add Shika to the Change Orders meeting to capture Maria's fast-follow requirements", "od": true}, {"t": "Add two ops debt line items to the Fallow deck (WebOps and homes/pricing ops)", "od": true}, {"t": "Confirm with Poon that the change order solution pre-read is sent out by Friday for Monday's product review", "od": true}, {"t": "Prepare status update for tomorrow's Fallow meeting covering Targeted Offer + Change Orders", "od": true}], "color": "#4f46e5"}, {"name": "Priyank Bansal", "total": 8, "overdue": 3, "overdueDetail": "3 overdue \u2014 Clarify Pricing JSON status with Deepak Yadav at t\u2026", "items": [{"t": "Ask Rihanna to add Maria and Sujata to weekly Fallow meeting; expand meeting to 1 hour", "od": false}, {"t": "Clarify Pricing JSON status with Deepak Yadav at tomorrow's meeting", "od": true}, {"t": "Conduct 30-minute review session with marketing operations team to ensure new system doesn't replicate bulk edit issues", "od": false}, {"t": "Explore earlier UAT start if dev is done by 5/15", "od": false}, {"t": "Follow up with Steve on Taxonomy workstream", "od": false}, {"t": "Forward Monday product review invite to Prateeksha and Nisarg", "od": true}, {"t": "Host 30-min MS Convergence demo", "od": false}, {"t": "Slack Ali the full list of 7 MCPs and their respective owners (Lalitha, Abirami, Gaurav Mishra, Pun, etc.)", "od": true}], "color": "#7c3aed"}, {"name": "Nisarg Trivedi", "total": 3, "overdue": 3, "overdueDetail": "3 overdue \u2014 Attend daily convergence war room; find secondary \u2026", "items": [{"t": "Attend daily convergence war room; find secondary working contact beyond Gaurav (suggest Rohit)", "od": true}, {"t": "Check with Bharat/John whether Janice is aligned on the 5-day UAT timeline; flag as risk if not", "od": true}, {"t": "Follow up with Gokul on XD design spec (due April 23, no response received)", "od": true}], "color": "#2563eb"}, {"name": "Bharatkumar .", "total": 5, "overdue": 0, "overdueDetail": "", "items": [{"t": "Be available for follow-up calls with Neeraj to address further questions on UI/UX for bulk and content edits", "od": false}, {"t": "Partner with users to document end-to-end UAT scenarios in parallel with development", "od": false}, {"t": "Share convergence document as pre-read to stakeholders; ensure PM sign-off before distribution", "od": false}, {"t": "Share user guide / PR FAQ with example prompts and suggestions for users during the testing phase", "od": false}, {"t": "Work with users to list all UAT scenarios and test cases for Change Orders", "od": false}], "color": "#0891b2"}, {"name": "Neeraj Gang", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Complete plan to cover all permutations of attribute changes in the UI within the next 10 days of coding", "od": false}], "color": "#059669"}, {"name": "Ali Navvab-Safavi", "total": 3, "overdue": 3, "overdueDetail": "3 overdue \u2014 Confirm RoW country mapping in SFDC Wholesale Offe\u2026", "items": [{"t": "Confirm RoW country mapping in SFDC Wholesale Offers", "od": true}, {"t": "Review IXP MCP work and create a WBS template; share with Poon and all 7 MCP owners with July 15 as target date", "od": true}, {"t": "Share SFDC Wholesale Offers delivery timeline (Risk)", "od": true}], "color": "#d97706"}, {"name": "Atul Joshi", "total": 2, "overdue": 0, "overdueDetail": "", "items": [{"t": "Create and share a refined mock/working version of the new widget/publishing experience in Marketing Studio", "od": false}, {"t": "XD visual design / IDS Component theme update (Risk \u2014 need new plan and ETA)", "od": false}], "color": "#dc2626"}, {"name": "Bharatkumar", "total": 2, "overdue": 1, "overdueDetail": "1 overdue \u2014 Develop UAT test cases for Change Orders", "items": [{"t": "Develop UAT test cases for Change Orders", "od": true}, {"t": "Revisit Targeted Offers items 3 & 4 post 30/60/90 milestones", "od": false}], "color": "#be185d"}, {"name": "Gokul Sarangapani", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Provide the week-over-week bug-fix plan and stability improvement projections for Marketing Studio", "od": false}], "color": "#6366f1"}, {"name": "Gaurav Misra", "total": 2, "overdue": 0, "overdueDetail": "", "items": [{"t": "IDS Component Migration (Risk \u2014 no longer in Convergence 5/11 plan)", "od": false}, {"t": "Taxonomy (Risk \u2014 no longer in Convergence 5/11 plan)", "od": false}], "color": "#0e7490"}, {"name": "Riana Katz", "total": 1, "overdue": 1, "overdueDetail": "1 overdue \u2014 Join Insights Repository meeting with Bharat", "items": [{"t": "Join Insights Repository meeting with Bharat", "od": true}], "color": "#7e22ce"}, {"name": "Rajat Khare", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Review and consider long-term value of current UI/UX approach vs agent-driven, draft-first workflow", "od": false}], "color": "#b45309"}, {"name": "Full Team", "total": 1, "overdue": 0, "overdueDetail": "", "items": [{"t": "Review list of known issues from previous bulk edit implementations in Campaign Manager", "od": false}], "color": "#4f46e5"}, {"name": "Suramya Gupta", "total": 1, "overdue": 1, "overdueDetail": "1 overdue \u2014 Set up call with Riana Katz on Mailchimp context i\u2026", "items": [{"t": "Set up call with Riana Katz on Mailchimp context ingestion testing", "od": true}], "color": "#7c3aed"}];
+
+function initials(n) { return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+
+
+/* ── RELEASE CALENDAR ── */
+const projects = [
+  {
+    id:'conv', name:'MS Convergence', dates:'Apr 3 – May 29, 2026',
+    color:'#4f46e5',
+    counts:{completed:1, inProgress:1, blocked:1, notStarted:5}, total:8,
+    milestones:[
+      {label:'Code Complete (P0/CM)', owner:'Gaurav Misra', end:'Apr 17', status:'completed'},
+      {label:'Code Complete (PPM/IXP)', owner:'Gaurav Misra', end:'Apr 23', status:'in-progress'},
+      {label:'XD Figma Design Spec', owner:'Atul Joshi', end:'Apr 23', status:'blocked'},
+      {label:'E2E Testing', owner:'Gaurav Misra', end:'Apr 30', status:'not-started'},
+      {label:'Production Deployment', owner:'Gaurav Misra', end:'May 8', status:'not-started'},
+      {label:'UAT (PM + MOps)', owner:'Bharatkumar', end:'May 8', status:'not-started'},
+      {label:'🎯 Go Live', owner:'Gaurav Misra', end:'May 11', status:'not-started'},
+      {label:'Success Metrics', owner:'Bharatkumar', end:'May 29', status:'not-started'},
+    ]
+  },
+  {
+    id:'co1', name:'Change Orders Ph1', dates:'Apr 20 – Jun 5, 2026',
+    color:'#059669',
+    counts:{completed:0, inProgress:2, blocked:0, notStarted:4}, total:6,
+    milestones:[
+      {label:'Solution Design Sign-off', owner:'Srinivas Kommu', end:'Apr 27', status:'in-progress'},
+      {label:'Code Complete', owner:'Kumaran / Abhay / Minal', end:'May 15', status:'in-progress'},
+      {label:'Integration + E2E Testing', owner:'Abhay Kumar Singh', end:'May 22', status:'not-started'},
+      {label:'UAT', owner:'Bharatkumar', end:'May 27', status:'not-started'},
+      {label:'🎯 Production Launch', owner:'Srinivas Kommu', end:'May 28', status:'not-started'},
+      {label:'Post Launch Monitoring', owner:'Srinivas Kommu', end:'Jun 5', status:'not-started'},
+    ]
+  },
+  {
+    id:'co2', name:'Change Orders Ph2', dates:'Apr 22 – Jun 19, 2026',
+    color:'#d97706',
+    counts:{completed:0, inProgress:1, blocked:0, notStarted:5}, total:6,
+    milestones:[
+      {label:'Solution Design Complete', owner:'NEERAJ GANG', end:'Apr 30', status:'in-progress'},
+      {label:'Code Complete', owner:'NEERAJ GANG / Firdosh / Sunil', end:'May 15', status:'not-started'},
+      {label:'E2E Testing', owner:'NEERAJ GANG', end:'May 29', status:'not-started'},
+      {label:'UAT (PM + MOps)', owner:'Bharatkumar', end:'Jun 5', status:'not-started'},
+      {label:'🎯 Production Launch', owner:'NEERAJ GANG', end:'Jun 12', status:'not-started'},
+      {label:'Post Launch + Metrics', owner:'Bharatkumar', end:'Jun 19', status:'not-started'},
+    ]
+  },
+  {
+    id:'to2', name:'Targeted Offer 2.0', dates:'Q2 2026',
+    color:'#be185d',
+    get counts() {
+      const open = owners.length;
+      const overdue = owners.filter(o => o.overdue > 0).length;
+      return {completed: 0, inProgress: open - overdue, blocked: overdue, notStarted: 0};
+    },
+    get total() { return owners.length; },
+    get milestones() {
+      return owners.slice(0,8).map(o => ({
+        label: o.name + ' — ' + o.total + ' item' + (o.total!==1?'s':''),
+        owner: o.name,
+        end: o.overdue > 0 ? o.overdueDetail : 'On track',
+        status: o.overdue > 0 ? 'blocked' : 'in-progress'
+      }));
+    }
+  }
+];
+
+const statusLabels = {completed:'Done','in-progress':'In Progress','not-started':'Not Started',blocked:'Blocked'};
+const chipClass = {completed:'chip-done','in-progress':'chip-prog','not-started':'chip-ns',blocked:'chip-block'};
+
+/* ── HEALTH STRIP ── */
+// Build health items lookup from all tracks
+const healthItems = {completed:[], inProgress:[], notStarted:[], blocked:[]};
+[['MS Convergence', msConvData], ['Change Orders', coWbsData]].forEach(function(pair) {
+  var track = pair[0], wbs = pair[1];
+  wbs.groups.forEach(function(grp) {
+    grp.tasks.forEach(function(t) {
+      if (healthItems[t.status]) {
+        healthItems[t.status].push({track: track, milestone: grp.name, task: t.task, owner: t.owner, date: t.date});
+      }
+    });
+  });
+});
+owners.forEach(function(o) {
+  o.items.forEach(function(item) {
+    var key = item.od ? 'blocked' : 'inProgress';
+    healthItems[key].push({track: 'Targeted Offer', milestone: 'RAID Log', task: item.t, owner: o.name, date: ''});
+  });
+});
+
+let activeHealthKey = null;
+(function buildHealthStrip() {
+  const totals = {completed:0, inProgress:0, notStarted:0, blocked:0};
+  [msConvData, coWbsData].forEach(d => {
+    Object.keys(totals).forEach(k => { totals[k] += (d.totals[k]||0); });
+  });
+  const raidOpen = owners.reduce((s,o) => s + o.total, 0);
+  const raidOD   = owners.reduce((s,o) => s + o.overdue, 0);
+  totals.inProgress += raidOpen - raidOD;
+  totals.blocked    += raidOD;
+
+  const cfg = [
+    {k:'completed',  label:'Completed',        color:'var(--green)',  sub:'tasks done'},
+    {k:'inProgress', label:'In Progress',       color:'var(--amber)',  sub:'actively tracked'},
+    {k:'blocked',    label:'Blocked / At Risk', color:'var(--red)',    sub:'need attention'},
+    {k:'notStarted', label:'Not Started',       color:'var(--brand)',  sub:'upcoming'},
+  ];
+  const strip = document.getElementById('healthStrip');
+  if (!strip) return;
+  cfg.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'health-card';
+    div.dataset.key = c.k;
+    div.setAttribute('data-key', c.k);
+    div.innerHTML = '<div class="h-val" style="color:'+c.color+'">'+totals[c.k]+'</div>'
+      + '<div class="h-lbl">'+c.label+'</div>'
+      + '<div class="h-sub">'+c.sub+'</div>';
+    div.addEventListener('click', (function(key){ return function(){ showHealthDetail(key); }; })(c.k));
+    strip.appendChild(div);
+  });
+})();
+
+function showHealthDetail(key) {
+  var detailEl  = document.getElementById('healthDetail');
+  var titleEl   = document.getElementById('healthDetailTitle');
+  var bodyEl    = document.getElementById('healthDetailContent');
+  if (!detailEl || !titleEl || !bodyEl) return;
+  document.querySelectorAll('.health-card').forEach(function(c){ c.classList.remove('active'); });
+  var activeCard = document.querySelector('[data-key="'+key+'"]');
+  if (activeCard) activeCard.classList.add('active');
+  if (activeHealthKey === key && detailEl.style.display === 'block') { closeHealthDetail(); return; }
+  activeHealthKey = key;
+  var labels = {completed:'Completed', inProgress:'In Progress', notStarted:'Not Started', blocked:'Blocked / At Risk'};
+  var colors = {completed:'var(--green)', inProgress:'var(--amber)', notStarted:'var(--brand)', blocked:'var(--red)'};
+  titleEl.innerHTML = '<span style="color:'+colors[key]+'">'+labels[key]+'</span> &mdash; All Items ('+(healthItems[key]||[]).length+')';
+  var items = healthItems[key] || [];
+  if (items.length === 0) {
+    bodyEl.innerHTML = '<div style="color:var(--gray);font-size:13px;padding:12px 0">No items in this category.</div>';
+  } else {
+    var trackCss = {'MS Convergence':'ht-conv','Change Orders':'ht-co','Targeted Offer':'ht-raid'};
+    bodyEl.innerHTML = items.map(function(item) {
+      var tc = trackCss[item.track] || 'ht-raid';
+      return '<div class="health-item-row">'
+        + '<span class="health-item-track '+tc+'">'+item.track+'</span>'
+        + '<span class="health-item-ms">'+item.milestone+'</span>'
+        + '<span class="health-item-task">'+item.task+'</span>'
+        + '<span class="health-item-owner">'+item.owner+'</span>'
+        + (item.date ? '<span class="health-item-date">&#128197; '+item.date+'</span>' : '')
+        + '</div>';
+    }).join('');
+  }
+  detailEl.classList.add('visible');
+  detailEl.style.display = 'block';
+  setTimeout(function(){ detailEl.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 60);
+}
+
+function closeHealthDetail() {
+  document.querySelectorAll('.health-card').forEach(function(c){ c.classList.remove('active'); });
+  activeHealthKey = null;
+  var detailEl = document.getElementById('healthDetail');
+  if (detailEl) { detailEl.classList.remove('visible'); detailEl.style.display = ''; }
+}
+
+(function() {
+  const g = document.getElementById('projCards');
+  if (!g) return;
+  projects.forEach((proj, i) => {
+    const card = document.createElement('div');
+    card.className = 'proj-card'; card.id = 'pcard-'+i; card.onclick = () => toggleProj(i);
+    const t = proj.counts; const tot = proj.total;
+    const pDone = (t.completed/tot*100).toFixed(1);
+    const pProg = (t.inProgress/tot*100).toFixed(1);
+    const pBlk  = (t.blocked/tot*100).toFixed(1);
+    const pNS   = (t.notStarted/tot*100).toFixed(1);
+    const progBar = '<div class="proj-progress-bar">'
+      + (t.completed>0  ? '<div class="pb-seg" style="width:'+pDone+'%;background:#10b981"></div>' : '')
+      + (t.inProgress>0 ? '<div class="pb-seg" style="width:'+pProg+'%;background:#f59e0b"></div>' : '')
+      + (t.blocked>0    ? '<div class="pb-seg" style="width:'+pBlk+'%;background:#ef4444"></div>'  : '')
+      + (t.notStarted>0 ? '<div class="pb-seg" style="width:'+pNS+'%;background:#6366f1"></div>'   : '')
+      + '</div>';
+    const statRow = [
+      t.completed>0  ? '<button class="chip chip-done proj-chip-btn" data-pidx="'+i+'" data-pstatus="completed">&#10003; '+t.completed+' Done</button>'          : '',
+      t.inProgress>0 ? '<button class="chip chip-prog proj-chip-btn" data-pidx="'+i+'" data-pstatus="inProgress">&#8635; '+t.inProgress+' In Progress</button>'  : '',
+      t.blocked>0    ? '<button class="chip chip-block proj-chip-btn" data-pidx="'+i+'" data-pstatus="blocked">&#215; '+t.blocked+' Blocked</button>'             : '',
+      t.notStarted>0 ? '<button class="chip chip-ns proj-chip-btn" data-pidx="'+i+'" data-pstatus="notStarted">&#9675; '+t.notStarted+' Not Started</button>'    : '',
+    ].filter(Boolean).join('');
+    const pctDone = tot > 0 ? Math.round(t.completed/tot*100) : 0;
+    const pctColor = pctDone >= 75 ? '#10b981' : pctDone >= 40 ? '#f59e0b' : '#6b7280';
+    card.innerHTML = '<div class="proj-card-top">'
+      + '<div><div class="proj-card-name">'+proj.name+'</div><div class="proj-card-dates">'+proj.dates+'</div></div>'
+      + '<div class="proj-card-right">'
+      + '<div style="text-align:center;margin-right:4px"><div class="proj-total" style="color:'+proj.color+'">'+proj.total+'</div><div class="proj-total-lbl">Tasks</div></div>'
+      + '<div style="text-align:center;margin-right:4px;padding:0 8px;border-left:1px solid var(--border)"><div class="proj-total" style="color:'+pctColor+'">'+pctDone+'%</div><div class="proj-total-lbl">Complete</div></div>'
+      + '<span class="chevron" id="pchev-'+i+'">&#9660;</span>'
+      + '</div></div>'
+      + progBar
+      + '<div class="proj-status-row" style="gap:6px">'+statRow+'</div>';
+    card.querySelectorAll('.proj-chip-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showProjStatus(parseInt(btn.dataset.pidx), btn.dataset.pstatus);
+      });
+    });
+    g.appendChild(card);
+  });
+})();
+
+let activeProjIdx = null;
+let activeProjStatus = null;
+
+function _renderMilestoneList(milestones) {
+  const list = document.getElementById('projMilestoneList'); if (!list) return; list.innerHTML = '';
+  if (!milestones.length) {
+    const li = document.createElement('li'); li.className = 'milestone-li';
+    li.innerHTML = '<span style="color:var(--gray);font-style:italic">No items in this status.</span>';
+    list.appendChild(li); return;
+  }
+  milestones.forEach((ms, n) => {
+    const li = document.createElement('li'); li.className = 'milestone-li';
+    li.innerHTML = '<div class="ms-num">'+(n+1)+'</div>'
+      + '<div class="ms-label">'+ms.label+'</div>'
+      + '<div class="ms-owner">'+ms.owner+'</div>'
+      + '<div class="ms-end">&#128197; '+ms.end+'</div>'
+      + '<span class="chip '+chipClass[ms.status]+'">'+statusLabels[ms.status]+'</span>';
+    list.appendChild(li);
+  });
+}
+
+function toggleProj(idx) {
+  const panel = document.getElementById('projDetail');
+  if (activeProjIdx===idx && activeProjStatus===null) { closeProjDetail(); return; }
+  if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
+  activeProjIdx = idx; activeProjStatus = null;
+  document.getElementById('pcard-'+idx).classList.add('active');
+  const proj = projects[idx];
+  document.getElementById('projDetailTitle').textContent = proj.name + ' — All Milestones';
+  _renderMilestoneList(proj.milestones);
+  panel.classList.add('visible');
+  setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
+}
+
+function showProjStatus(projIdx, statusKey) {
+  const panel = document.getElementById('projDetail');
+  if (activeProjIdx===projIdx && activeProjStatus===statusKey) { closeProjDetail(); return; }
+  if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
+  activeProjIdx = projIdx; activeProjStatus = statusKey;
+  document.getElementById('pcard-'+projIdx).classList.add('active');
+  const proj = projects[projIdx];
+  const keyToMs = {completed:'completed', inProgress:'in-progress', notStarted:'not-started', blocked:'blocked'};
+  const humanLabel = {completed:'Completed', inProgress:'In Progress', notStarted:'Not Started', blocked:'Blocked'};
+  const msStatus = keyToMs[statusKey] || statusKey;
+  document.getElementById('projDetailTitle').textContent = proj.name + ' — ' + (humanLabel[statusKey] || statusKey);
+  _renderMilestoneList(proj.milestones.filter(ms => ms.status === msStatus));
+  panel.classList.add('visible');
+  setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
+}
+
+function closeProjDetail() {
+  if (activeProjIdx!==null) document.getElementById('pcard-'+activeProjIdx).classList.remove('active');
+  activeProjIdx = null; activeProjStatus = null;
+  document.getElementById('projDetail').classList.remove('visible');
+}
+
+/* ── GANTT ── */
+const RS = new Date('2026-04-01'), RD = 90;
+function pct(d) { if(!d) return null; const diff=(new Date(d)-RS)/864e5; return Math.max(0,Math.min(100,diff/RD*100)); }
+function bw(s,e) { const sp=pct(s),ep=pct(e); return sp==null||ep==null?0:Math.max(.8,ep-sp); }
+const ganttData = [
+  {label:'MS Conv · Code (P0/CM)',track:'conv',status:'completed',start:'2026-04-03',end:'2026-04-17'},
+  {label:'MS Conv · Code (PPM/IXP)',track:'conv',status:'in-progress',start:'2026-04-03',end:'2026-04-23'},
+  {label:'MS Conv · XD Figma',track:'conv',status:'blocked',start:'2026-04-10',end:'2026-04-23'},
+  {label:'MS Conv · E2E Testing',track:'conv',status:'not-started',start:'2026-04-17',end:'2026-04-30'},
+  {label:'MS Conv · Prod Deploy',track:'conv',status:'not-started',start:'2026-05-01',end:'2026-05-08'},
+  {label:'MS Conv · UAT',track:'conv',status:'not-started',start:'2026-05-04',end:'2026-05-08'},
+  {label:'MS Conv · Go Live 🎯',track:'conv',status:'not-started',start:'2026-05-08',end:'2026-05-11',key:true},
+  {label:'MS Conv · Post Launch',track:'conv',status:'not-started',start:'2026-05-11',end:'2026-05-29'},
+  {label:'CO Ph1 · Solution Design',track:'co1',status:'in-progress',start:'2026-04-20',end:'2026-04-27'},
+  {label:'CO Ph1 · Code Complete',track:'co1',status:'in-progress',start:'2026-04-22',end:'2026-05-15'},
+  {label:'CO Ph1 · Integration Test',track:'co1',status:'not-started',start:'2026-05-13',end:'2026-05-15'},
+  {label:'CO Ph1 · E2E Testing',track:'co1',status:'not-started',start:'2026-05-18',end:'2026-05-22'},
+  {label:'CO Ph1 · UAT',track:'co1',status:'not-started',start:'2026-05-25',end:'2026-05-27'},
+  {label:'CO Ph1 · Launch 🎯',track:'co1',status:'not-started',start:'2026-05-28',end:'2026-05-29',key:true},
+  {label:'CO Ph1 · Post Launch',track:'co1',status:'not-started',start:'2026-05-29',end:'2026-06-05'},
+  {label:'CO Ph2 · Solution Design',track:'co2',status:'in-progress',start:'2026-04-22',end:'2026-04-30'},
+  {label:'CO Ph2 · Code Complete',track:'co2',status:'not-started',start:'2026-05-05',end:'2026-05-15'},
+  {label:'CO Ph2 · E2E Testing',track:'co2',status:'not-started',start:'2026-05-18',end:'2026-05-29'},
+  {label:'CO Ph2 · UAT',track:'co2',status:'not-started',start:'2026-05-25',end:'2026-06-05'},
+  {label:'CO Ph2 · Launch 🎯',track:'co2',status:'not-started',start:'2026-06-12',end:'2026-06-13',key:true},
+  {label:'CO Ph2 · Post Launch',track:'co2',status:'not-started',start:'2026-06-15',end:'2026-06-19'},
+];
+(function() {
+  const cont = document.getElementById('ganttContainer');
+  if (!cont) return;
+  const hdr = document.createElement('div'); hdr.className = 'gantt-header';
+  ['April','May','June'].forEach(m => { const d=document.createElement('div'); d.className='gantt-month'; d.textContent=m; hdr.appendChild(d); });
+  cont.appendChild(hdr);
+  const tp = pct(new Date().toISOString().slice(0,10));
+  let lastTrack = null;
+  ganttData.forEach(row => {
+    if (row.track!==lastTrack && lastTrack!==null) { const hr=document.createElement('hr'); hr.className='gantt-divider'; cont.appendChild(hr); }
+    lastTrack = row.track;
+    const rd = document.createElement('div'); rd.className = 'gantt-row';
+    const lbl = document.createElement('div'); lbl.className='gantt-label'; lbl.textContent=row.label;
+    const trk = document.createElement('div'); trk.className='gantt-track';
+    const tl = document.createElement('div');
+    tl.style.cssText = 'position:absolute;left:'+tp+'%;top:-3px;bottom:-3px;width:2px;background:rgba(239,68,68,.45);z-index:1;';
+    trk.appendChild(tl);
+    const bar = document.createElement('div'); bar.className='gantt-bar '+row.status;
+    bar.style.left = pct(row.start)+'%'; bar.style.width = bw(row.start,row.end)+'%';
+    trk.appendChild(bar);
+    if (row.key) { const m=document.createElement('div'); m.className='milestone-marker'; m.style.left=(pct(row.end)-.8)+'%'; trk.appendChild(m); }
+    rd.appendChild(lbl); rd.appendChild(trk); cont.appendChild(rd);
+  });
+})();
+
+const allMilestones = [
+  {track:'MS Convergence',label:'Code Complete (P0/CM)',owner:'Gaurav Misra',start:'Apr 3',end:'Apr 17',status:'completed'},
+  {track:'MS Convergence',label:'Code Complete (PPM/IXP)',owner:'Gaurav Misra',start:'Apr 3',end:'Apr 23',status:'in-progress'},
+  {track:'MS Convergence',label:'XD Figma Design Spec',owner:'Atul Joshi',start:'—',end:'Apr 23',status:'blocked'},
+  {track:'MS Convergence',label:'E2E Testing',owner:'Gaurav Misra',start:'Apr 17',end:'Apr 30',status:'not-started'},
+  {track:'MS Convergence',label:'Production Deployment',owner:'Gaurav Misra',start:'May 1',end:'May 8',status:'not-started'},
+  {track:'MS Convergence',label:'UAT (PM + MOps)',owner:'Bharatkumar',start:'May 4',end:'May 8',status:'not-started'},
+  {track:'MS Convergence',label:'🎯 Go Live',owner:'Gaurav Misra',start:'May 8',end:'May 11',status:'not-started'},
+  {track:'MS Convergence',label:'Success Metrics',owner:'Bharatkumar',start:'May 11',end:'May 29',status:'not-started'},
+  {track:'Change Orders Ph1',label:'Solution Design Sign-off',owner:'Srinivas Kommu',start:'Apr 20',end:'Apr 27',status:'in-progress'},
+  {track:'Change Orders Ph1',label:'Code Complete',owner:'Kumaran / Abhay / Minal',start:'Apr 22',end:'May 15',status:'in-progress'},
+  {track:'Change Orders Ph1',label:'Integration + E2E Testing',owner:'Abhay Kumar Singh',start:'May 13',end:'May 22',status:'not-started'},
+  {track:'Change Orders Ph1',label:'UAT',owner:'Bharatkumar',start:'May 20',end:'May 27',status:'not-started'},
+  {track:'Change Orders Ph1',label:'🎯 Production Launch',owner:'Srinivas Kommu',start:'May 28',end:'May 28',status:'not-started'},
+  {track:'Change Orders Ph1',label:'Post Launch Monitoring',owner:'Srinivas Kommu',start:'May 29',end:'Jun 5',status:'not-started'},
+  {track:'Change Orders Ph2',label:'Solution Design Complete',owner:'NEERAJ GANG',start:'Apr 22',end:'Apr 30',status:'in-progress'},
+  {track:'Change Orders Ph2',label:'Code Complete',owner:'NEERAJ GANG / Firdosh / Sunil',start:'May 5',end:'May 15',status:'not-started'},
+  {track:'Change Orders Ph2',label:'E2E Testing',owner:'NEERAJ GANG',start:'May 18',end:'May 29',status:'not-started'},
+  {track:'Change Orders Ph2',label:'UAT (PM + MOps)',owner:'Bharatkumar',start:'May 25',end:'Jun 5',status:'not-started'},
+  {track:'Change Orders Ph2',label:'🎯 Production Launch',owner:'NEERAJ GANG',start:'Jun 12',end:'Jun 12',status:'not-started'},
+  {track:'Change Orders Ph2',label:'Post Launch + Metrics',owner:'Bharatkumar',start:'Jun 15',end:'Jun 19',status:'not-started'},
+];
+const statusMap = {completed:'<span class="chip chip-done">✓ Done</span>','in-progress':'<span class="chip chip-prog">↻ In Progress</span>','not-started':'<span class="chip chip-ns">○ Not Started</span>',blocked:'<span class="chip chip-block">✕ Blocked</span>'};
+const trackMap = {'MS Convergence':'<span class="track-badge track-conv">MS Conv</span>','Change Orders Ph1':'<span class="track-badge track-co1">CO Ph1</span>','Change Orders Ph2':'<span class="track-badge track-co2">CO Ph2</span>'};
+const tbody = document.getElementById('milestoneTable');
+if (tbody) allMilestones.forEach(m => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td>'+(trackMap[m.track]||m.track)+'</td><td style="font-weight:500">'+m.label+'</td><td style="color:#6b7280;font-size:11px">'+m.owner+'</td><td style="font-size:11px">'+m.start+'</td><td style="font-weight:600">'+m.end+'</td><td>'+(statusMap[m.status]||m.status)+'</td>';
+  tbody.appendChild(tr);
+});
+
+/* ── WBS PAGE RENDERER ── */
+const STATUS_COLORS_WBS = {completed:'#10b981',inProgress:'#f59e0b',notStarted:'#6366f1',blocked:'#ef4444'};
+const STATUS_LABELS_WBS = {completed:'Completed',inProgress:'In Progress',notStarted:'Not Started',blocked:'Blocked'};
+const STATUS_CHIP_WBS   = {completed:'chip-done',inProgress:'chip-prog',notStarted:'chip-ns',blocked:'chip-block'};
+
+function renderWbsSummary(data, containerId) {
+  const t = data.totals;
+  const total = Object.values(t).reduce((a,b)=>a+b,0);
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '<div class="metric-strip">'
+    + ['completed','inProgress','notStarted','blocked'].map(k =>
+        '<div class="metric-strip-item">'
+        +'<div class="metric-strip-val" style="color:'+STATUS_COLORS_WBS[k]+'">'+t[k]+'</div>'
+        +'<div class="metric-strip-lbl">'+STATUS_LABELS_WBS[k]+'</div>'
+        +'</div>'
+      ).join('')
+    + '</div>';
+}
+
+function renderWbsGroups(data, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  data.groups.forEach((group, gi) => {
+    const total = group.tasks.length;
+    const card = document.createElement('div');
+    card.className = 'ms-group-card';
+    card.id = 'wbscard-'+containerId+'-'+gi;
+    // progress bar segments
+    const keys = ['completed','inProgress','blocked','notStarted'];
+    const pbSegs = keys.map(k => {
+      if (!group.counts[k]) return '';
+      const pct = (group.counts[k]/total*100).toFixed(1);
+      return '<div class="pb-seg" style="width:'+pct+'%;background:'+STATUS_COLORS_WBS[k]+'"></div>';
+    }).join('');
+    // chips
+    const chips = keys.filter(k => group.counts[k]>0).map(k =>
+      '<span class="chip '+STATUS_CHIP_WBS[k]+'">'+group.counts[k]+' '+STATUS_LABELS_WBS[k]+'</span>'
+    ).join('');
+    // tasks
+    const taskRows = group.tasks.map(t =>
+      '<div class="wbs-task-row">'
+      +'<span class="chip '+STATUS_CHIP_WBS[t.status]+'" style="flex-shrink:0;margin-left:0">'+STATUS_LABELS_WBS[t.status]+'</span>'
+      +'<span class="wbs-task-name">'+t.task+'</span>'
+      +'<span class="wbs-task-owner">'+t.owner+'</span>'
+      +(t.date ? '<span class="wbs-task-date">&#128197; '+t.date+'</span>' : '')
+      +'</div>'
+    ).join('');
+    card.innerHTML =
+      '<div class="ms-group-header" id="whdr-'+containerId+'-'+gi+'">'
+      +'<div><div class="ms-group-name">'+group.name+'</div>'
+      +'<div class="proj-card-dates">'+total+' task'+(total!==1?'s':'')+'</div></div>'
+      +'<div class="ms-group-chips">'+chips+'<span class="chevron" id="wchev-'+containerId+'-'+gi+'">&#9660;</span></div>'
+      +'</div>'
+      +'<div class="proj-progress-bar" style="margin:10px 0 6px">'+pbSegs+'</div>'
+      +'<div class="ms-group-body" id="wbsbody-'+containerId+'-'+gi+'">'+taskRows+'</div>';
+    card.querySelector('.ms-group-header').addEventListener('click', (function(cid,g){return function(){toggleWbsCard(cid,g);};})(containerId,gi));
+    container.appendChild(card);
+  });
+}
+
+function toggleWbsCard(cid, gi) {
+  const body = document.getElementById('wbsbody-'+cid+'-'+gi);
+  const chev = document.getElementById('wchev-'+cid+'-'+gi);
+  const card = document.getElementById('wbscard-'+cid+'-'+gi);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  card.classList.toggle('open', !isOpen);
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+/* ── INIT WBS PAGES ── */
+
+/* ── TO WBS SUMMARY + GROUPS ── */
+(function initTOWbs() {
+  renderWbsSummary(to2WbsData, 'toWbsSummary');
+  renderWbsGroups(to2WbsData, 'toWbsGroups');
+})();
+
+/* ── RAID FULL ── */
+var raidTypeFilter = 'All';
+var raidTrackFilter = 'All';
+
+function raidStatusClass(s) {
+  if (s === 'In Progress') return 'rtag-status-inprogress';
+  if (s === 'Not Started') return 'rtag-status-notstarted';
+  return 'rtag-status-open';
+}
+function raidPriClass(p) {
+  if (p === 'High') return 'rtag-pri-high';
+  if (p === 'Medium') return 'rtag-pri-medium';
+  return 'rtag-pri-low';
+}
+function raidTypeClass(t) {
+  if (t === 'Risk') return 'type-risk';
+  if (t === 'Decision') return 'type-decision';
+  if (t === 'Issue') return 'type-issue';
+  return 'type-action';
+}
+function raidTypeBadgeClass(t) {
+  if (t === 'Risk') return 'rtype-risk';
+  if (t === 'Decision') return 'rtype-decision';
+  if (t === 'Issue') return 'rtype-issue';
+  return 'rtype-action';
+}
+function trackDisplayName(ws) {
+  var map = {'R2_Chg_Order_MVP':'Change Orders','R0_Stability':'Stability','MC context ingestion':'MC Ingestion'};
+  return map[ws] || ws;
+}
+
+function renderRaidMetrics(items) {
+  var el = document.getElementById('raidMetrics');
+  if (!el) return;
+  var total = items.length;
+  var risks = items.filter(function(i){ return i.type === 'Risk'; }).length;
+  var actions = items.filter(function(i){ return i.type === 'Action Item'; }).length;
+  var issues = items.filter(function(i){ return i.type === 'Issue'; }).length;
+  var decisions = items.filter(function(i){ return i.type === 'Decision'; }).length;
+  var high = items.filter(function(i){ return i.priority === 'High'; }).length;
+  var cfg = [
+    {v: total,     l: 'Total Items',    c: 'var(--brand)'},
+    {v: risks,     l: 'Risks',          c: 'var(--amber)'},
+    {v: actions,   l: 'Actions',        c: 'var(--purple)'},
+    {v: issues,    l: 'Issues',         c: 'var(--red)'},
+    {v: decisions, l: 'Decisions',      c: 'var(--blue)'},
+    {v: high,      l: 'High Severity',  c: 'var(--red)'},
+  ];
+  el.innerHTML = cfg.map(function(c){
+    return '<div class="raid-metric-card"><div class="rmv" style="color:'+c.c+'">'+c.v+'</div><div class="rml">'+c.l+'</div></div>';
+  }).join('');
+}
+
+function renderRaidCards(items) {
+  var el = document.getElementById('raidCards');
+  if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<div style="color:var(--gray);font-size:13px;padding:14px 0;text-align:center">No items match the current filters.</div>';
+    return;
+  }
+  el.innerHTML = items.map(function(item){
+    var typeClass = raidTypeClass(item.type);
+    var badgeClass = raidTypeBadgeClass(item.type);
+    var statusClass = raidStatusClass(item.status);
+    var priClass = raidPriClass(item.priority);
+    var trackName = trackDisplayName(item.workstream);
+    return '<a class="raid-item-card '+typeClass+' raid-card-link" href="'+SHEET_URL+'" target="_blank" title="Open in Smartsheet ↗">'
+      + '<div class="raid-item-top">'
+      + '<div class="raid-item-title">'+item.item+'</div>'
+      + '<span class="raid-item-type-badge '+badgeClass+'">'+item.type+'</span>'
+      + '</div>'
+      + '<div class="raid-item-tags">'
+      + '<span class="raid-tag '+statusClass+'">'+item.status+'</span>'
+      + '<span class="raid-tag '+priClass+'">'+item.priority+'</span>'
+      + '<span class="raid-tag rtag-track">'+trackName+'</span>'
+      + '</div>'
+      + '<div class="raid-item-footer">'
+      + '<span class="raid-item-owner">&#128100; '+item.owner+'</span>'
+      + (item.due ? '<span class="raid-item-due">&#128197; '+item.due+'</span>' : '<span class="raid-item-due" style="color:var(--gray)">No due date</span>')
+      + '<span class="raid-open-hint">&#8599; Open in Smartsheet</span>'
+      + '</div>'
+      + '</a>';
+  }).join('');
+}
+
+function filterRaid(filterType, val, el) {
+  if (filterType === 'type') {
+    raidTypeFilter = val;
+    document.querySelectorAll('[data-filter-type="type"]').forEach(function(c){ c.classList.remove('active'); });
+  } else {
+    raidTrackFilter = val;
+    document.querySelectorAll('[data-filter-type="track"]').forEach(function(c){ c.classList.remove('active'); });
+  }
+  if (el) el.classList.add('active');
+  var filtered = RAID_FULL_DATA.filter(function(item){
+    var typeOk = raidTypeFilter === 'All' || item.type === raidTypeFilter;
+    var trackOk = raidTrackFilter === 'All' || item.workstream === raidTrackFilter;
+    return typeOk && trackOk;
+  });
+  renderRaidMetrics(filtered);
+  renderRaidCards(filtered);
+}
+
+// Initial render
+renderRaidMetrics(RAID_FULL_DATA);
+renderRaidCards(RAID_FULL_DATA);
+
+/* ── MS CONVERGENCE PIPELINE ── */
+function initConvPipeline() {
+  // Helper: ISO date string -> percentage across Jan–Jun 2026 (181 days)
+  var RS_C = new Date('2026-01-01'), RD_C = 181;
+  function isoDate(d) { if(!d) return null; var diff=(new Date(d)-RS_C)/864e5; return Math.max(0,Math.min(100,diff/RD_C*100)); }
+  function barW(s,e) { var sp=isoDate(s),ep=isoDate(e); if(sp==null&&ep==null) return 0; if(sp==null) return 1.5; return Math.max(1.5,ep-sp); }
+
+  // Donut
+  var phases = MS_CONV_PIPELINE;
+  var totalTasks = phases.reduce(function(s,p){return s+p.tasks;},0);
+  var completedTasks = phases.filter(function(p){return p.status==='Completed';}).reduce(function(s,p){return s+p.tasks;},0);
+  var inProgressTasks = phases.filter(function(p){return p.status==='In Progress';}).reduce(function(s,p){return s+p.tasks;},0);
+  var blockedTasks = phases.filter(function(p){return p.status==='Blocked';}).reduce(function(s,p){return s+p.tasks;},0);
+  var notStartedTasks = totalTasks - completedTasks - inProgressTasks - blockedTasks;
+  var pctConv = totalTasks > 0 ? Math.round(completedTasks/totalTasks*100) : 19;
+
+  var tpEl = document.getElementById('convTrackProgress');
+  if (tpEl) {
+    var cx=50,cy=50,r=38,stroke=10,circ=2*Math.PI*r;
+    var segs=[{v:completedTasks,c:'#10b981'},{v:inProgressTasks,c:'#f59e0b'},{v:blockedTasks,c:'#ef4444'},{v:notStartedTasks,c:'#6366f1'}];
+    var offset=circ*0.25, svgH='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f3f4f6" stroke-width="'+stroke+'"/>';
+    segs.forEach(function(seg){ if(!seg.v) return; var dash=(seg.v/totalTasks)*circ; svgH+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.c+'" stroke-width="'+stroke+'" stroke-dasharray="'+dash.toFixed(2)+' '+(circ-dash).toFixed(2)+'" stroke-dashoffset="'+offset.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')" />'; offset-=dash; });
+    tpEl.innerHTML='<div class="opex-progress-section" style="margin-bottom:0">'
+      +'<div class="opex-donut-wrap"><svg width="100" height="100" viewBox="0 0 100 100">'+svgH+'</svg>'
+      +'<div class="opex-donut-label"><div class="opex-donut-pct">'+pctConv+'%</div><div class="opex-donut-sub">complete</div></div></div>'
+      +'<div class="opex-donut-stats"><div class="opex-donut-stat-row">'
+      +[{v:totalTasks,l:'Total Tasks',c:'var(--text)'},{v:completedTasks,l:'Completed',c:'#10b981'},{v:inProgressTasks,l:'In Progress',c:'#f59e0b'},{v:blockedTasks,l:'Blocked',c:'#ef4444'},{v:notStartedTasks,l:'Not Started',c:'#6366f1'}].map(function(s){return '<div class="opex-donut-stat"><div class="dv" style="color:'+s.c+'">'+s.v+'</div><div class="dl">'+s.l+'</div></div>';}).join('')
+      +'</div></div></div>';
+  }
+
+  // Pipeline cards
+  var pipeEl = document.getElementById('convPipelineSection');
+  if (pipeEl) {
+    var cards = phases.map(function(task, idx){
+      var arrow = idx < phases.length-1 ? '<div class="opex-arrow">&#8594;</div>' : '';
+      var milestoneBadge = task.milestone ? '<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>' : '';
+      var cardClass = task.milestone ? 'opex-card milestone-card' : 'opex-card';
+      var statusClass = task.status==='In Progress' ? 'opex-status-inprogress' : (task.status==='Completed' ? 'opex-status-completed' : (task.status==='Blocked' ? 'opex-status-blocked' : 'opex-status-notstarted'));
+      var dates = task.end ? 'Due ' + task.end.slice(5).replace('-','/') : '';
+      return '<div class="'+cardClass+'">'
+        +'<div class="opex-card-id">'+task.id+'</div>'
+        +milestoneBadge
+        +'<div class="opex-card-step">'+task.step+'</div>'
+        +(task.driver ? '<div class="opex-card-driver">'+task.driver+'</div>' : '')
+        +(dates ? '<div class="opex-card-dates">&#128197; '+dates+'</div>' : '')
+        +(task.detail ? '<div class="opex-card-driver" style="font-size:10px;margin-top:4px">'+task.detail+'</div>' : '')
+        +'<div><span class="opex-status-badge '+statusClass+'">'+task.status+'</span></div>'
+        +'</div>'+arrow;
+    }).join('');
+    pipeEl.innerHTML = '<div class="opex-release-section"><div class="opex-release-header">MS CONVERGENCE &mdash; SINGLE RELEASE TRACK</div><div class="opex-pipeline" style="flex-wrap:wrap">'+cards+'</div></div>';
+  }
+
+  // Gantt
+  var ganttEl = document.getElementById('convGantt');
+  if (ganttEl) {
+    var hdr = document.createElement('div'); hdr.className='gantt-header';
+    ['Jan','Feb','Mar','Apr','May','Jun'].forEach(function(m){ var d=document.createElement('div'); d.className='gantt-month'; d.textContent=m; hdr.appendChild(d); });
+    ganttEl.appendChild(hdr);
+    var statusColorMap={'Completed':'linear-gradient(90deg,#059669,#34d399)','In Progress':'linear-gradient(90deg,#d97706,#fbbf24)','Blocked':'linear-gradient(90deg,#dc2626,#f87171)','Not Started':'linear-gradient(90deg,#6366f1,#818cf8)'};
+    var tp = isoDate(new Date().toISOString().slice(0,10));
+    phases.forEach(function(task){
+      if (!task.end) return;
+      var rd=document.createElement('div'); rd.className='gantt-row';
+      var lbl=document.createElement('div'); lbl.className='gantt-label'; lbl.textContent=task.step;
+      var trk=document.createElement('div'); trk.className='gantt-track';
+      var tl=document.createElement('div'); tl.style.cssText='position:absolute;left:'+tp+'%;top:-3px;bottom:-3px;width:2px;background:rgba(239,68,68,.45);z-index:1;'; trk.appendChild(tl);
+      var bar=document.createElement('div'); bar.className='gantt-bar';
+      var startD=task.start||task.end;
+      bar.style.background=statusColorMap[task.status]||statusColorMap['Not Started'];
+      bar.style.left=isoDate(startD)+'%';
+      bar.style.width=barW(task.start,task.end)+'%';
+      trk.appendChild(bar);
+      if (task.milestone){ var m=document.createElement('div'); m.className='milestone-marker'; m.style.left=(isoDate(task.end)-.8)+'%'; trk.appendChild(m); }
+      rd.appendChild(lbl); rd.appendChild(trk); ganttEl.appendChild(rd);
+    });
+  }
+}
+
+/* ── CHANGE ORDERS PIPELINE ── */
+function initCOPipeline() {
+  var RS_C=new Date('2026-01-01'), RD_C=181;
+  function isoDate(d){ if(!d) return null; var diff=(new Date(d)-RS_C)/864e5; return Math.max(0,Math.min(100,diff/RD_C*100)); }
+  function barW(s,e){ var sp=isoDate(s),ep=isoDate(e); if(sp==null&&ep==null) return 0; if(sp==null) return 1.5; return Math.max(1.5,ep-sp); }
+
+  function countTasks(phases, stat) { return phases.filter(function(p){return p.status===stat;}).reduce(function(s,p){return s+p.tasks;},0); }
+  function totalTaskCount(phases) { return phases.reduce(function(s,p){return s+p.tasks;},0); }
+
+  var ph1=CO_PIPELINE.ph1, ph2=CO_PIPELINE.ph2;
+  var t1=totalTaskCount(ph1), c1=countTasks(ph1,'Completed'), ip1=countTasks(ph1,'In Progress'), b1=countTasks(ph1,'Blocked'), ns1=t1-c1-ip1-b1;
+  var t2=totalTaskCount(ph2), c2=countTasks(ph2,'Completed'), ip2=countTasks(ph2,'In Progress'), b2=countTasks(ph2,'Blocked'), ns2=t2-c2-ip2-b2;
+  var pct1=t1>0?Math.round(c1/t1*100):0, pct2=t2>0?Math.round(c2/t2*100):0;
+
+  var tpEl=document.getElementById('coTrackProgress');
+  if (tpEl) {
+    function donutHtml(total,completed,inProg,blocked,notStarted,pct,label){
+      var cx=50,cy=50,r=38,stroke=10,circ=2*Math.PI*r;
+      var segs=[{v:completed,c:'#10b981'},{v:inProg,c:'#f59e0b'},{v:blocked,c:'#ef4444'},{v:notStarted,c:'#6366f1'}];
+      var offset=circ*0.25, svgH='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f3f4f6" stroke-width="'+stroke+'"/>';
+      segs.forEach(function(seg){ if(!seg.v) return; var dash=(seg.v/total)*circ; svgH+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.c+'" stroke-width="'+stroke+'" stroke-dasharray="'+dash.toFixed(2)+' '+(circ-dash).toFixed(2)+'" stroke-dashoffset="'+offset.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')" />'; offset-=dash; });
+      return '<div class="opex-progress-section" style="flex:1;min-width:200px">'
+        +'<div class="opex-donut-wrap"><svg width="80" height="80" viewBox="0 0 100 100">'+svgH+'</svg>'
+        +'<div class="opex-donut-label"><div class="opex-donut-pct" style="font-size:16px">'+pct+'%</div><div class="opex-donut-sub">'+label+'</div></div></div>'
+        +'<div class="opex-donut-stats"><div class="opex-donut-stat-row">'
+        +[{v:total,l:'Tasks',c:'var(--text)'},{v:completed,l:'Done',c:'#10b981'},{v:inProg,l:'In Progress',c:'#f59e0b'},{v:notStarted,l:'Not Started',c:'#6366f1'}].map(function(s){return '<div class="opex-donut-stat"><div class="dv" style="color:'+s.c+'">'+s.v+'</div><div class="dl">'+s.l+'</div></div>';}).join('')
+        +'</div></div></div>';
+    }
+    tpEl.innerHTML='<div style="display:flex;gap:16px;flex-wrap:wrap;width:100%">'
+      +donutHtml(t1,c1,ip1,b1,ns1,pct1,'Ph1')
+      +donutHtml(t2,c2,ip2,b2,ns2,pct2,'Ph2')
+      +'</div>';
+  }
+
+  var phaseEl=document.getElementById('coPhaseSection');
+  if (phaseEl) {
+    function pipelineHtml(phases, header){
+      var statusColorMap={'Completed':'linear-gradient(90deg,#059669,#34d399)','In Progress':'linear-gradient(90deg,#d97706,#fbbf24)','Blocked':'linear-gradient(90deg,#dc2626,#f87171)','Not Started':'linear-gradient(90deg,#6366f1,#818cf8)'};
+      var statusClass={'In Progress':'opex-status-inprogress','Completed':'opex-status-completed','Blocked':'opex-status-blocked','Not Started':'opex-status-notstarted'};
+      var cards=phases.map(function(task,idx){
+        var arrow=idx<phases.length-1?'<div class="opex-arrow">&#8594;</div>':'';
+        var milestoneBadge=task.milestone?'<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>':'';
+        var cardClass=task.milestone?'opex-card milestone-card':'opex-card';
+        var dates=task.start&&task.end?task.start.slice(5).replace('-','/')+' – '+task.end.slice(5).replace('-','/'):(task.end?'Due '+task.end.slice(5).replace('-','/'):'');
+        return '<div class="'+cardClass+'">'
+          +'<div class="opex-card-id">'+task.id+'</div>'
+          +milestoneBadge
+          +'<div class="opex-card-step">'+task.step+'</div>'
+          +(task.driver?'<div class="opex-card-driver">'+task.driver+'</div>':'')
+          +(dates?'<div class="opex-card-dates">&#128197; '+dates+'</div>':'')
+          +(task.detail?'<div class="opex-card-driver" style="font-size:10px;margin-top:4px">'+task.detail+'</div>':'')
+          +'<div><span class="opex-status-badge '+(statusClass[task.status]||'opex-status-notstarted')+'">'+task.status+'</span></div>'
+          +'</div>'+arrow;
+      }).join('');
+      return '<div class="opex-release-section"><div class="co-phase-header">'+header+'</div><div class="opex-pipeline" style="flex-wrap:wrap">'+cards+'</div></div>';
+    }
+    phaseEl.innerHTML=pipelineHtml(ph1,'PHASE 1 &mdash; MAY 28 LAUNCH')+pipelineHtml(ph2,'PHASE 2 &mdash; JUNE 15 LAUNCH');
+  }
+
+  // Gantt
+  var ganttEl=document.getElementById('coGantt');
+  if (ganttEl) {
+    var hdr=document.createElement('div'); hdr.className='gantt-header';
+    ['Jan','Feb','Mar','Apr','May','Jun'].forEach(function(m){ var d=document.createElement('div'); d.className='gantt-month'; d.textContent=m; hdr.appendChild(d); });
+    ganttEl.appendChild(hdr);
+    var statusColorMap={'Completed':'linear-gradient(90deg,#059669,#34d399)','In Progress':'linear-gradient(90deg,#d97706,#fbbf24)','Blocked':'linear-gradient(90deg,#dc2626,#f87171)','Not Started':'linear-gradient(90deg,#6366f1,#818cf8)'};
+    var tp=isoDate(new Date().toISOString().slice(0,10));
+    var hr=document.createElement('hr'); hr.className='gantt-divider';
+    function addPhaseRows(phases) {
+      phases.forEach(function(task){
+        if(!task.end&&!task.start) return;
+        var rd=document.createElement('div'); rd.className='gantt-row';
+        var lbl=document.createElement('div'); lbl.className='gantt-label'; lbl.textContent=task.step;
+        var trk=document.createElement('div'); trk.className='gantt-track';
+        var tl=document.createElement('div'); tl.style.cssText='position:absolute;left:'+tp+'%;top:-3px;bottom:-3px;width:2px;background:rgba(239,68,68,.45);z-index:1;'; trk.appendChild(tl);
+        var bar=document.createElement('div'); bar.className='gantt-bar';
+        var startD=task.start||task.end;
+        bar.style.background=statusColorMap[task.status]||statusColorMap['Not Started'];
+        bar.style.left=isoDate(startD)+'%';
+        bar.style.width=barW(task.start,task.end)+'%';
+        trk.appendChild(bar);
+        if(task.milestone){var m=document.createElement('div'); m.className='milestone-marker'; m.style.left=(isoDate(task.end)-.8)+'%'; trk.appendChild(m);}
+        rd.appendChild(lbl); rd.appendChild(trk); ganttEl.appendChild(rd);
+      });
+    }
+    addPhaseRows(ph1);
+    var div=document.createElement('hr'); div.className='gantt-divider'; ganttEl.appendChild(div);
+    addPhaseRows(ph2);
+  }
+}
+
+/* ── TARGETED OFFER PIPELINE ── */
+function initTOPipeline() {
+  // Apr 1 – Aug 3, 2026 = 124 days
+  var RS_T = new Date('2026-04-01'), RD_T = 124;
+  function isoDate(d) { if(!d) return null; var diff=(new Date(d)-RS_T)/864e5; return Math.max(0,Math.min(100,diff/RD_T*100)); }
+  function barW(s,e) { var sp=isoDate(s),ep=isoDate(e); if(sp==null&&ep==null) return 0; if(sp==null) return 1.5; return Math.max(1.5,ep-sp); }
+
+  var phases = TO_PIPELINE;
+  var totalTasks    = phases.reduce(function(s,p){return s+p.tasks;},0);
+  var completedT    = phases.filter(function(p){return p.status==='Completed';}).reduce(function(s,p){return s+p.tasks;},0);
+  var inProgressT   = phases.filter(function(p){return p.status==='In Progress';}).reduce(function(s,p){return s+p.tasks;},0);
+  var blockedT      = phases.filter(function(p){return p.status==='Blocked';}).reduce(function(s,p){return s+p.tasks;},0);
+  var notStartedT   = totalTasks - completedT - inProgressT - blockedT;
+  var pct = totalTasks > 0 ? Math.round(completedT/totalTasks*100) : 0;
+
+  // ── Donut / progress ──
+  var tpEl = document.getElementById('toTrackProgress');
+  if (tpEl) {
+    var cx=50,cy=50,r=38,stroke=10,circ=2*Math.PI*r;
+    var segs=[{v:completedT,c:'#10b981'},{v:inProgressT,c:'#f59e0b'},{v:blockedT,c:'#ef4444'},{v:notStartedT,c:'#6366f1'}];
+    var offset=circ*0.25, svgH='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f3f4f6" stroke-width="'+stroke+'"/>';
+    segs.forEach(function(seg){ if(!seg.v) return; var dash=(seg.v/totalTasks)*circ; svgH+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.c+'" stroke-width="'+stroke+'" stroke-dasharray="'+dash.toFixed(2)+' '+(circ-dash).toFixed(2)+'" stroke-dashoffset="'+offset.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')" />'; offset-=dash; });
+    tpEl.innerHTML='<div class="opex-progress-section" style="margin-bottom:0">'
+      +'<div class="opex-donut-wrap"><svg width="100" height="100" viewBox="0 0 100 100">'+svgH+'</svg>'
+      +'<div class="opex-donut-label"><div class="opex-donut-pct">'+pct+'%</div><div class="opex-donut-sub">complete</div></div></div>'
+      +'<div class="opex-donut-stats"><div class="opex-donut-stat-row">'
+      +[{v:totalTasks,l:'Total Tasks',c:'var(--text)'},{v:completedT,l:'Completed',c:'#10b981'},{v:inProgressT,l:'In Progress',c:'#f59e0b'},{v:blockedT,l:'Blocked',c:'#ef4444'},{v:notStartedT,l:'Not Started',c:'#6366f1'}].map(function(s){return '<div class="opex-donut-stat"><div class="dv" style="color:'+s.c+'">'+s.v+'</div><div class="dl">'+s.l+'</div></div>';}).join('')
+      +'</div></div></div>';
+  }
+
+  // ── Pipeline cards ──
+  var pipeEl = document.getElementById('toPipelineSection');
+  if (pipeEl) {
+    var cards = phases.map(function(task, idx){
+      var arrow = idx < phases.length-1 ? '<div class="opex-arrow">&#8594;</div>' : '';
+      var milestoneBadge = task.milestone ? '<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>' : '';
+      var cardClass = task.milestone ? 'opex-card milestone-card' : 'opex-card';
+      var statusClass = task.status==='In Progress' ? 'opex-status-inprogress' : (task.status==='Completed' ? 'opex-status-completed' : (task.status==='Blocked' ? 'opex-status-blocked' : 'opex-status-notstarted'));
+      var dates = task.end ? 'Due ' + task.end.slice(5).replace('-','/') : '';
+      return '<div class="'+cardClass+'">'
+        +'<div class="opex-card-id">'+task.id+'</div>'
+        +milestoneBadge
+        +'<div class="opex-card-step">'+task.step+'</div>'
+        +(task.driver ? '<div class="opex-card-driver">'+task.driver+'</div>' : '')
+        +(dates ? '<div class="opex-card-dates">&#128197; '+dates+'</div>' : '')
+        +(task.detail ? '<div class="opex-card-driver" style="font-size:10px;margin-top:4px">'+task.detail+'</div>' : '')
+        +'<div><span class="opex-status-badge '+statusClass+'">'+task.status+'</span></div>'
+        +'</div>'+arrow;
+    }).join('');
+    pipeEl.innerHTML='<div class="opex-release-section"><div class="opex-release-header">TARGETED OFFER IN MARKETING STUDIO &mdash; RELEASE 6 &middot; GO LIVE JUL 15</div><div class="opex-pipeline" style="flex-wrap:wrap">'+cards+'</div></div>';
+  }
+
+  // ── Gantt ──
+  var ganttEl = document.getElementById('toGantt');
+  if (ganttEl) {
+    var hdr = document.createElement('div'); hdr.className='gantt-header';
+    ['Apr','May','Jun','Jul','Aug'].forEach(function(m){ var d=document.createElement('div'); d.className='gantt-month'; d.textContent=m; hdr.appendChild(d); });
+    ganttEl.appendChild(hdr);
+    var statusColorMap={'Completed':'linear-gradient(90deg,#059669,#34d399)','In Progress':'linear-gradient(90deg,#d97706,#fbbf24)','Blocked':'linear-gradient(90deg,#dc2626,#f87171)','Not Started':'linear-gradient(90deg,#6366f1,#818cf8)'};
+    var tp = isoDate(new Date().toISOString().slice(0,10));
+    phases.forEach(function(task){
+      if (!task.end && !task.start) return;
+      var rd=document.createElement('div'); rd.className='gantt-row';
+      var lbl=document.createElement('div'); lbl.className='gantt-label'; lbl.textContent=task.step;
+      var trk=document.createElement('div'); trk.className='gantt-track';
+      var tl=document.createElement('div'); tl.style.cssText='position:absolute;left:'+tp+'%;top:-3px;bottom:-3px;width:2px;background:rgba(239,68,68,.45);z-index:1;'; trk.appendChild(tl);
+      var bar=document.createElement('div'); bar.className='gantt-bar';
+      bar.style.background=statusColorMap[task.status]||statusColorMap['Not Started'];
+      bar.style.left=isoDate(task.start||task.end)+'%';
+      bar.style.width=barW(task.start,task.end)+'%';
+      trk.appendChild(bar);
+      if (task.milestone){ var m=document.createElement('div'); m.className='milestone-marker'; m.style.left=(isoDate(task.end)-.8)+'%'; trk.appendChild(m); }
+      rd.appendChild(lbl); rd.appendChild(trk); ganttEl.appendChild(rd);
+    });
+  }
+}
+
+/* ── PROGRAM DASHBOARD ── */
+try {
+(function initProgramDashboard() {
+  // ── Helpers ──
+  var RS = new Date('2026-04-01'), RD = 97; // Apr 1 – Jul 7
+  function datePct(d) { if(!d) return null; var diff=(new Date(d)-RS)/864e5; return Math.max(0,Math.min(100,diff/RD*100)); }
+  function barW(s,e) { var sp=datePct(s),ep=datePct(e); if(sp==null&&ep==null) return 0; if(sp==null) sp=ep; return Math.max(0.8,ep-sp); }
+  function fmtDate(iso) { if(!iso) return ''; var p=iso.slice(5).split('-'); var months=['Jan','Feb','Mar','Apr','May','Jun','Jul']; return months[parseInt(p[0])-1]+' '+parseInt(p[1]); }
+  var STATUS_COLOR = {
+    'Completed':  'linear-gradient(90deg,#059669,#34d399)',
+    'In Progress':'linear-gradient(90deg,#3b82f6,#60a5fa)',
+    'Blocked':    'linear-gradient(90deg,#dc2626,#f87171)',
+    'Not Started':'#d1d5db'
+  };
+  var STATUS_BADGE = {
+    'Completed':'opex-status-completed','In Progress':'opex-status-inprogress',
+    'Blocked':'opex-status-blocked','Not Started':'opex-status-notstarted'
+  };
+
+  // ── Milestone Timeline Strip ──
+  (function buildMilestoneTimeline() {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var milestones = [
+      { date:'2026-05-11', title:'MS Convergence Go-Live',   track:'MS Convergence',  status:'at-risk',     driver:'Gokul S' },
+      { date:'2026-05-18', title:'Workflows & Use Cases',    track:'MS Convergence',  status:'at-risk',     driver:'Steve S' },
+      { date:'2026-06-01', title:'Dashboard Analytics',      track:'MS Convergence',  status:'not-started', driver:'Steve S / Anirudh M' },
+      { date:'2026-06-15', title:'Change Order MVP Go-Live', track:'Change Orders',   status:'not-started', driver:'Pon / Abhinit' },
+      { date:'2026-07-01', title:'100% MCP Enabled',         track:'MS Convergence',  status:'not-started', driver:'Gokul / Abhinit' },
+      { date:'2026-07-15', title:'Targeted Offers Go-Live',  track:'Targeted Offer',  status:'on-track',    driver:'Pon / Abhinit' },
+      { date:'2026-07-31', title:'End Tool Access',          track:'MS Convergence',  status:'not-started', driver:'Gokul / Abhinit' },
+    ];
+    var STATUS_STYLE = {
+      'on-track':    { dot:'#10b981', cdBg:'#d1fae5', cdTx:'#065f46', label:'On Track' },
+      'at-risk':     { dot:'#f59e0b', cdBg:'#fef3c7', cdTx:'#78350f', label:'At Risk'  },
+      'blocked':     { dot:'#ef4444', cdBg:'#fee2e2', cdTx:'#7f1d1d', label:'Blocked'  },
+      'not-started': { dot:'#94a3b8', cdBg:'#f1f5f9', cdTx:'#475569', label:'Not Started' },
+      'completed':   { dot:'#6366f1', cdBg:'#ede9fe', cdTx:'#3730a3', label:'Completed' },
+    };
+    function dayDiff(isoStr) {
+      var d = new Date(isoStr); d.setHours(0,0,0,0);
+      return Math.round((d - today) / 864e5);
+    }
+    function fmtMonDay(isoStr) {
+      var p = isoStr.split('-'); var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+      return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]);
+    }
+    function cdLabel(dd, status) {
+      if (status === 'completed') return 'Done';
+      if (dd < 0) return Math.abs(dd) + 'd ago';
+      if (dd === 0) return 'Today!';
+      return dd + ' days';
+    }
+
+    var wrap = document.getElementById('msDashTimeline');
+    if (!wrap) return;
+    var html = '<div class="ms-timeline-wrap">'
+      + '<div class="ms-timeline-hd">&#128197; MS1 Q4 FY26 &mdash; Release Milestones</div>'
+      + '<div class="ms-timeline-rail">';
+
+    milestones.forEach(function(m) {
+      var dd = dayDiff(m.date);
+      var st = STATUS_STYLE[m.status] || STATUS_STYLE['not-started'];
+      html += '<div class="ms-tl-node">'
+        + '<div class="ms-tl-dot" style="background:' + st.dot + '"></div>'
+        + '<div class="ms-tl-date">' + fmtMonDay(m.date) + '</div>'
+        + '<div class="ms-tl-title">&nbsp;' + m.title + '</div>'
+        + '<div class="ms-tl-cd" style="background:' + st.cdBg + ';color:' + st.cdTx + '">' + cdLabel(dd, m.status) + '</div>'
+        + '</div>';
+    });
+
+    html += '</div></div>';
+    wrap.innerHTML = html;
+  })();
+
+  // ── Donut builder ──
+  function buildDonut(total, completed, inProg, blocked, notStarted, pct) {
+    var cx=50,cy=50,r=36,stroke=9,circ=2*Math.PI*r;
+    var segs=[{v:completed,c:'#10b981'},{v:inProg,c:'#f59e0b'},{v:blocked,c:'#ef4444'},{v:notStarted,c:'#d1d5db'}];
+    var offset=circ*0.25;
+    var svgH='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f3f4f6" stroke-width="'+stroke+'"/>';
+    segs.forEach(function(seg){
+      if(!seg.v||!total) return;
+      var dash=(seg.v/total)*circ;
+      svgH+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.c+'" stroke-width="'+stroke+'" stroke-dasharray="'+dash.toFixed(2)+' '+(circ-dash).toFixed(2)+'" stroke-dashoffset="'+offset.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')" />';
+      offset-=dash;
+    });
+    return '<svg width="72" height="72" viewBox="0 0 100 100">'+svgH+'</svg>'
+      +'<div style="position:absolute;top:50%;left:36px;transform:translate(-50%,-50%);text-align:center;pointer-events:none">'
+      +'<div style="font-size:13px;font-weight:900;color:var(--text)">'+pct+'%</div>'
+      +'<div style="font-size:9px;color:var(--gray)">done</div></div>';
+  }
+
+  // ── Track progress donuts ──
+  function makeDonutCard(label, color, total, completed, inProg, blocked, notStarted) {
+    var pct = total > 0 ? Math.round(completed/total*100) : 0;
+    return '<div class="prog-donut-card">'
+      +'<div style="position:relative;width:72px;height:72px;flex-shrink:0">'+buildDonut(total,completed,inProg,blocked,notStarted,pct)+'</div>'
+      +'<div><div class="prog-donut-card-label" style="color:'+color+'">'+label+'</div>'
+      +'<div class="prog-donut-card-stats">'
+      +[{v:total,l:'Tasks',c:'var(--text)'},{v:completed,l:'Completed',c:'#10b981'},{v:inProg,l:'In Progress',c:'#f59e0b'},{v:blocked,l:'Blocked',c:'#ef4444'},{v:notStarted,l:'Not Started',c:'#6366f1'}].map(function(s){
+        return '<div class="prog-donut-stat"><div class="dv" style="color:'+s.c+'">'+s.v+'</div><div class="dl">'+s.l+'</div></div>';
+      }).join('')+'</div></div></div>';
+  }
+
+  // Opex donut
+  var opxAll=[]; MS_OPEX_DATA.forEach(function(r){r.tasks.forEach(function(t){opxAll.push(t.status);});});
+  var opxT=opxAll.length, opxC=opxAll.filter(function(s){return s==='Completed';}).length,
+      opxI=opxAll.filter(function(s){return s==='In Progress';}).length,
+      opxB=opxAll.filter(function(s){return s==='Blocked';}).length,
+      opxN=opxT-opxC-opxI-opxB;
+
+  // Conv donut
+  var cvT=MS_CONV_PIPELINE.reduce(function(s,p){return s+p.tasks;},0),
+      cvC=MS_CONV_PIPELINE.filter(function(p){return p.status==='Completed';}).reduce(function(s,p){return s+p.tasks;},0),
+      cvI=MS_CONV_PIPELINE.filter(function(p){return p.status==='In Progress';}).reduce(function(s,p){return s+p.tasks;},0),
+      cvB=MS_CONV_PIPELINE.filter(function(p){return p.status==='Blocked';}).reduce(function(s,p){return s+p.tasks;},0),
+      cvN=cvT-cvC-cvI-cvB;
+
+  // CO donut
+  var coAllP=CO_PIPELINE.ph1.concat(CO_PIPELINE.ph2);
+  var coT=coAllP.reduce(function(s,p){return s+(p.tasks||1);},0),
+      coC=coAllP.filter(function(p){return p.status==='Completed';}).reduce(function(s,p){return s+(p.tasks||1);},0),
+      coI=coAllP.filter(function(p){return p.status==='In Progress';}).reduce(function(s,p){return s+(p.tasks||1);},0),
+      coB=coAllP.filter(function(p){return p.status==='Blocked';}).reduce(function(s,p){return s+(p.tasks||1);},0),
+      coN=coT-coC-coI-coB;
+
+  // TO2 donut
+  var to2All=[]; TO2_PHASES.forEach(function(ph){ph.tasks.forEach(function(t){to2All.push(t.status);});});
+  var to2T=to2All.length, to2C=to2All.filter(function(s){return s==='Completed';}).length,
+      to2I=to2All.filter(function(s){return s==='In Progress';}).length,
+      to2B=to2All.filter(function(s){return s==='Blocked';}).length,
+      to2N=to2T-to2C-to2I-to2B;
+
+  var tpr = document.getElementById('progTrackProgressRow');
+  if (tpr) tpr.innerHTML =
+    makeDonutCard('MS Opex','#4f46e5',opxT,opxC,opxI,opxB,opxN)
+    +makeDonutCard('MS Convergence','#7c3aed',cvT,cvC,cvI,cvB,cvN)
+    +makeDonutCard('Change Orders','#059669',coT,coC,coI,coB,coN)
+    +makeDonutCard('Targeted Offer 2.0','#be185d',to2T,to2C,to2I,to2B,to2N);
+
+  // ── Detailed Gantt builder ──
+  function buildDetailedGantt(tasks, rangeLabel, goLiveDate) {
+    // tasks: [{id, step, driver, start, end, status, milestone}, ...]
+    var today = new Date().toISOString().slice(0,10);
+    var tp = datePct(today);
+    var glp = goLiveDate ? datePct(goLiveDate) : null;
+    var rows = tasks.map(function(t){
+      if(!t.start && !t.end) return '';
+      var startD = t.start || t.end;
+      var barLeft = datePct(startD);
+      var barWidth = barW(t.start, t.end);
+      var barColor = STATUS_COLOR[t.status] || STATUS_COLOR['Not Started'];
+      var milestoneHtml = t.milestone
+        ? '<div class="pgt-milestone-marker" style="left:'+datePct(t.end)+'%"></div>' : '';
+      var todayLine = '<div class="pgt-today-line" style="left:'+tp+'%"></div>';
+      var goLiveLine = glp !== null
+        ? '<div style="position:absolute;left:'+glp+'%;top:-3px;bottom:-3px;width:2px;background:rgba(245,158,11,.7);z-index:3;border-left:2px dashed #f59e0b"></div>' : '';
+      return '<tr>'
+        +'<td class="pgt-id">'+(t.id||'')+'</td>'
+        +'<td class="pgt-task">'+(t.step||t.task||'')+'</td>'
+        +'<td class="pgt-driver">'+(t.driver||t.owner||'')+'</td>'
+        +'<td class="pgt-date">'+(t.start?fmtDate(t.start):'')+'</td>'
+        +'<td class="pgt-date">'+(t.end?fmtDate(t.end):'')+'</td>'
+        +'<td class="pgt-bar-cell">'
+        +'<div class="pgt-bar-track">'
+        +todayLine
+        +goLiveLine
+        +'<div class="pgt-bar" style="left:'+barLeft+'%;width:'+barWidth+'%;background:'+barColor+'"></div>'
+        +milestoneHtml
+        +'</div></td>'
+        +'</tr>';
+    }).join('');
+    var glLabel = goLiveDate ? ' &nbsp;<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#d97706;font-weight:600"><span style="display:inline-block;width:10px;height:2px;border-top:2px dashed #f59e0b;margin-right:2px"></span>Go Live: '+fmtDate(goLiveDate)+'</span>' : '';
+    return '<div class="prog-gantt-wrap">'
+      +'<div class="prog-gantt-title">TIMELINE'+glLabel+'</div>'
+      +'<div class="prog-gantt-scroll">'
+      +'<table class="prog-gantt-table">'
+      +'<thead><tr><th>ID</th><th>Task</th><th>Driver</th><th>Start</th><th>End</th><th><span class="pgt-range-label">'+rangeLabel+'</span></th></tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'</table></div></div>';
+  }
+
+  // ── Opex Section ──
+  var opexSec = document.getElementById('progOpexSection');
+  if (opexSec) {
+    var msBar = MS_OPEX_DATA.map(function(r){
+      return '<div class="opex-ms-btn"><span class="ms-flag">&#127919;</span>'+r.go_live+'</div>';
+    }).join('');
+    var relHtml = MS_OPEX_DATA.map(function(rel){
+      var cards = rel.tasks.map(function(task, idx){
+        var arrow = idx < rel.tasks.length-1 ? '<div class="opex-arrow">&#8594;</div>' : '';
+        var mb = task.milestone ? '<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>' : '';
+        var cc = task.milestone ? 'opex-card milestone-card' : 'opex-card';
+        var sc = STATUS_BADGE[task.status] || 'opex-status-notstarted';
+        var dates = (task.start&&task.end) ? task.start.slice(5).replace('-','/')+' – '+task.end.slice(5).replace('-','/') : (task.end?'Due '+task.end.slice(5).replace('-','/'):'');
+        return '<div class="'+cc+'">'
+          +'<div class="opex-card-id">'+task.id+'</div>'+mb
+          +'<div class="opex-card-step">'+task.step+'</div>'
+          +(task.driver?'<div class="opex-card-driver">'+task.driver+'</div>':'')
+          +(dates?'<div class="opex-card-dates">&#128197; '+dates+'</div>':'')
+          +'<div><span class="opex-status-badge '+sc+'">'+task.status+'</span></div>'
+          +'</div>'+arrow;
+      }).join('');
+      return '<div class="opex-release-section">'
+        +'<div class="opex-release-header">'+rel.go_live.toUpperCase()+' RELEASE — '+rel.label+'</div>'
+        +'<div class="opex-pipeline">'+cards+'</div>'
+        +'</div>';
+    }).join('');
+    var opexTasks = [];
+    MS_OPEX_DATA.forEach(function(r){ r.tasks.forEach(function(t){ opexTasks.push(t); }); });
+    var ganttHtml = buildDetailedGantt(opexTasks, 'Apr 1 – Jun 30', '2026-04-30');
+    opexSec.innerHTML = '<div class="prog-track-header">'
+      +'<div class="prog-track-header-label"><span style="background:#4f46e5;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px">MS_OPEX</span> MS Opex</div>'
+      +'<div class="prog-track-header-meta">'+opxC+'/'+opxT+' complete · Bi-weekly operational releases with Go-Live milestones</div>'
+      +'</div>'
+      +'<div style="border:1px solid var(--border);border-top:none;padding:14px;border-radius:0 0 8px 8px">'
+      +'<div class="opex-milestone-bar" style="margin-bottom:14px">&#127989; MILESTONES  '+msBar+'</div>'
+      +relHtml
+      +ganttHtml
+      +'</div>';
+  }
+
+  // ── MS Convergence Section ──
+  var convSec = document.getElementById('progConvSection');
+  if (convSec) {
+    var convCards = MS_CONV_PIPELINE.map(function(task, idx){
+      var arrow = idx < MS_CONV_PIPELINE.length-1 ? '<div class="opex-arrow">&#8594;</div>' : '';
+      var mb = task.milestone ? '<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>' : '';
+      var cc = task.milestone ? 'opex-card milestone-card' : 'opex-card';
+      var sc = STATUS_BADGE[task.status] || 'opex-status-notstarted';
+      var dates = task.end ? 'Due '+task.end.slice(5).replace('-','/') : '';
+      return '<div class="'+cc+'">'
+        +'<div class="opex-card-id">'+task.id+'</div>'+mb
+        +'<div class="opex-card-step">'+task.step+'</div>'
+        +(task.driver?'<div class="opex-card-driver">'+task.driver+'</div>':'')
+        +(dates?'<div class="opex-card-dates">&#128197; '+dates+'</div>':'')
+        +(task.detail?'<div class="opex-card-driver" style="font-size:10px;margin-top:4px">'+task.detail+'</div>':'')
+        +'<div><span class="opex-status-badge '+sc+'">'+task.status+'</span></div>'
+        +'</div>'+arrow;
+    }).join('');
+    var convGanttTasks = MS_CONV_PIPELINE.map(function(p){
+      return {id:p.id, step:p.step, driver:p.driver, start:p.start, end:p.end, status:p.status, milestone:p.milestone};
+    });
+    var convGanttHtml = buildDetailedGantt(convGanttTasks, 'Jan – Jun 2026', '2026-05-11');
+    convSec.innerHTML = '<div class="prog-track-header">'
+      +'<div class="prog-track-header-label"><span style="background:#7c3aed;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px">MS_CONV</span> MS Convergence</div>'
+      +'<div class="prog-track-header-meta">'+cvC+'/'+cvT+' complete · Go Live: May 11, 2026</div>'
+      +'</div>'
+      +'<div style="border:1px solid var(--border);border-top:none;padding:14px;border-radius:0 0 8px 8px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span class="opex-ms-label">&#127989; MILESTONE</span><span class="opex-milestone-btn">May 11 — Go Live</span></div>'
+      +'<div class="opex-release-section"><div class="opex-pipeline" style="flex-wrap:wrap">'+convCards+'</div></div>'
+      +convGanttHtml
+      +'</div>';
+  }
+
+  // ── Change Orders Section ──
+  var coSec = document.getElementById('progCOSection');
+  if (coSec) {
+    function coPipeHtml(phases, phLabel) {
+      var cards = phases.map(function(task, idx){
+        var arrow = idx < phases.length-1 ? '<div class="opex-arrow">&#8594;</div>' : '';
+        var mb = task.milestone ? '<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>' : '';
+        var cc = task.milestone ? 'opex-card milestone-card' : 'opex-card';
+        var sc = STATUS_BADGE[task.status] || 'opex-status-notstarted';
+        var dates = task.start&&task.end ? task.start.slice(5).replace('-','/')+' – '+task.end.slice(5).replace('-','/') : (task.end?'Due '+task.end.slice(5).replace('-','/'):'');
+        return '<div class="'+cc+'">'
+          +'<div class="opex-card-id">'+task.id+'</div>'+mb
+          +'<div class="opex-card-step">'+task.step+'</div>'
+          +(task.driver?'<div class="opex-card-driver">'+task.driver+'</div>':'')
+          +(dates?'<div class="opex-card-dates">&#128197; '+dates+'</div>':'')
+          +(task.detail?'<div class="opex-card-driver" style="font-size:10px;margin-top:4px">'+task.detail+'</div>':'')
+          +'<div><span class="opex-status-badge '+sc+'">'+task.status+'</span></div>'
+          +'</div>'+arrow;
+      }).join('');
+      return '<div class="opex-release-section"><div class="co-phase-header">'+phLabel+'</div><div class="opex-pipeline" style="flex-wrap:wrap">'+cards+'</div></div>';
+    }
+    var coPh1Tasks = CO_PIPELINE.ph1.map(function(p){return {id:p.id,step:p.step,driver:p.driver,start:p.start,end:p.end,status:p.status,milestone:p.milestone};});
+    var coPh2Tasks = CO_PIPELINE.ph2.map(function(p){return {id:p.id,step:p.step,driver:p.driver,start:p.start,end:p.end,status:p.status,milestone:p.milestone};});
+    var coGanttHtml = buildDetailedGantt(coPh1Tasks.concat(coPh2Tasks), 'Jan – Jun 2026', '2026-05-28');
+    coSec.innerHTML = '<div class="prog-track-header">'
+      +'<div class="prog-track-header-label"><span style="background:#059669;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px">CO</span> Change Orders</div>'
+      +'<div class="prog-track-header-meta">'+coC+'/'+coT+' complete · Ph1: May 28 · Ph2: Jun 15</div>'
+      +'</div>'
+      +'<div style="border:1px solid var(--border);border-top:none;padding:14px;border-radius:0 0 8px 8px">'
+      +coPipeHtml(CO_PIPELINE.ph1,'PHASE 1 — MAY 28 LAUNCH')
+      +coPipeHtml(CO_PIPELINE.ph2,'PHASE 2 — JUNE 15 LAUNCH')
+      +coGanttHtml
+      +'</div>';
+  }
+
+  // ── Targeted Offer 2.0 Section ──
+  var to2Sec = document.getElementById('progTO2Section');
+  if (to2Sec) {
+    var toCards = TO_PIPELINE.map(function(task, idx){
+      var arrow = idx < TO_PIPELINE.length-1 ? '<div class="opex-arrow">&#8594;</div>' : '';
+      var mb = task.milestone ? '<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>' : '';
+      var cc = task.milestone ? 'opex-card milestone-card' : 'opex-card';
+      var sc = STATUS_BADGE[task.status] || 'opex-status-notstarted';
+      var dates = task.end ? 'Due '+task.end.slice(5).replace('-','/') : '';
+      return '<div class="'+cc+'">'
+        +'<div class="opex-card-id">'+task.id+'</div>'+mb
+        +'<div class="opex-card-step">'+task.step+'</div>'
+        +(task.driver?'<div class="opex-card-driver">'+task.driver+'</div>':'')
+        +(dates?'<div class="opex-card-dates">&#128197; '+dates+'</div>':'')
+        +(task.detail?'<div class="opex-card-driver" style="font-size:10px;margin-top:4px">'+task.detail+'</div>':'')
+        +'<div><span class="opex-status-badge '+sc+'">'+task.status+'</span></div>'
+        +'</div>'+arrow;
+    }).join('');
+    var toGanttTasks = TO_PIPELINE.map(function(p){
+      return {id:p.id, step:p.step, driver:p.driver, start:p.start, end:p.end, status:p.status, milestone:p.milestone};
+    });
+    var toGanttHtml = buildDetailedGantt(toGanttTasks, 'Apr – Aug 2026', '2026-07-15');
+    to2Sec.innerHTML = '<div class="prog-track-header">'
+      +'<div class="prog-track-header-label"><span style="background:#be185d;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px">TO</span> Targeted Offer 2.0</div>'
+      +'<div class="prog-track-header-meta">'+to2C+'/'+to2T+' complete · Go Live: Jul 15, 2026 · Driver: Pon / Abhinit</div>'
+      +'</div>'
+      +'<div style="border:1px solid var(--border);border-top:none;padding:14px;border-radius:0 0 8px 8px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span class="opex-ms-label">&#127919; MILESTONE</span><span class="opex-milestone-btn">Jul 15 &mdash; Go Live</span></div>'
+      +'<div class="opex-release-section"><div class="opex-pipeline" style="flex-wrap:wrap">'+toCards+'</div></div>'
+      +toGanttHtml
+      +'</div>';
+  }
+
+  // ── Track filter ──
+  var activeTrack = 'All';
+  function applyTrackFilter(track) {
+    var map = {'MS Opex':'progOpexSection','MS Convergence':'progConvSection','Change Orders':'progCOSection','Targeted Offer':'progTO2Section'};
+    var donuts = document.querySelectorAll('.prog-donut-card');
+    var donutLabels = ['MS Opex','MS Convergence','Change Orders','Targeted Offer 2.0'];
+    donuts.forEach(function(d, i){
+      var trackKey = donutLabels[i].replace(' 2.0','');
+      d.style.display = (track==='All' || track===trackKey || (track==='Targeted Offer' && donutLabels[i]==='Targeted Offer 2.0')) ? '' : 'none';
+    });
+    Object.keys(map).forEach(function(k){
+      var el = document.getElementById(map[k]);
+      if (el) el.style.display = (track==='All' || track===k) ? '' : 'none';
+    });
+  }
+  window.filterProgTrack = function(track, chipEl) {
+    activeTrack = track;
+    document.querySelectorAll('.prog-track-chip').forEach(function(c){ c.classList.remove('active'); });
+    if (chipEl) chipEl.classList.add('active');
+    applyTrackFilter(track);
+  };
+  applyTrackFilter('All');
+})();
+} catch(e) { console.error('initProgramDashboard error:', e); }
+
+
+/* ── MS OPEX ── */
+function initOPEX() {
+  // Donut chart
+  var allTasks = [];
+  MS_OPEX_DATA.forEach(function(r){ r.tasks.forEach(function(t){ allTasks.push(t); }); });
+  var total = allTasks.length;
+  var completed = allTasks.filter(function(t){ return t.status === 'Completed'; }).length;
+  var inProgress = allTasks.filter(function(t){ return t.status === 'In Progress'; }).length;
+  var notStarted = allTasks.filter(function(t){ return t.status === 'Not Started'; }).length;
+  var pct = total > 0 ? Math.round(completed / total * 100) : 0;
+
+  var pctEl = document.getElementById('opexDonutPct');
+  if (pctEl) pctEl.textContent = pct + '%';
+
+  // Draw SVG donut
+  var svg = document.getElementById('opexDonutSvg');
+  if (svg) {
+    var cx = 50, cy = 50, r = 38, stroke = 10;
+    var circ = 2 * Math.PI * r;
+    var segments = [
+      {v: completed,  color: '#10b981'},
+      {v: inProgress, color: '#f59e0b'},
+      {v: notStarted, color: '#6366f1'},
+    ];
+    var offset = circ * 0.25; // start at top
+    var html = '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f3f4f6" stroke-width="'+stroke+'"/>';
+    var remaining = circ;
+    segments.forEach(function(seg){
+      if (!seg.v) return;
+      var dash = (seg.v / total) * circ;
+      html += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.color+'" stroke-width="'+stroke+'"'
+        + ' stroke-dasharray="'+dash.toFixed(2)+' '+(circ-dash).toFixed(2)+'"'
+        + ' stroke-dashoffset="'+offset.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')" />';
+      offset -= dash;
+    });
+    svg.innerHTML = html;
+  }
+
+  // Donut stats
+  var statsEl = document.getElementById('opexDonutStats');
+  if (statsEl) {
+    statsEl.innerHTML = [
+      {v: total,      l: 'Total',       c: 'var(--text)'},
+      {v: completed,  l: 'Completed',   c: '#10b981'},
+      {v: inProgress, l: 'In Progress', c: '#f59e0b'},
+      {v: notStarted, l: 'Not Started', c: '#6366f1'},
+    ].map(function(s){
+      return '<div class="opex-donut-stat"><div class="dv" style="color:'+s.c+'">'+s.v+'</div><div class="dl">'+s.l+'</div></div>';
+    }).join('');
+  }
+
+  // Milestone bar
+  var msBar = document.getElementById('opexMilestoneBar');
+  if (msBar) {
+    msBar.innerHTML = MS_OPEX_DATA.map(function(r){
+      return '<div class="opex-ms-btn"><span class="ms-flag">&#127919;</span>'+r.go_live+'</div>';
+    }).join('');
+  }
+
+  // Release sections
+  var relEl = document.getElementById('opexReleases');
+  if (relEl) {
+    relEl.innerHTML = MS_OPEX_DATA.map(function(rel){
+      var headerLabel = rel.go_live.toUpperCase() + ' RELEASE &mdash; ' + rel.label;
+      var cards = rel.tasks.map(function(task, idx){
+        var arrow = idx < rel.tasks.length - 1 ? '<div class="opex-arrow">&#8594;</div>' : '';
+        var milestoneBadge = task.milestone ? '<div class="opex-card-milestone-badge">&#127919; MILESTONE</div>' : '';
+        var cardClass = task.milestone ? 'opex-card milestone-card' : 'opex-card';
+        var statusClass = task.status === 'In Progress' ? 'opex-status-inprogress' : (task.status === 'Completed' ? 'opex-status-completed' : 'opex-status-notstarted');
+        var dates = (task.start && task.end) ? task.start.slice(5).replace('-','/') + ' – ' + task.end.slice(5).replace('-','/') : (task.end ? 'Due ' + task.end.slice(5).replace('-','/') : '');
+        return '<div class="'+cardClass+'">'
+          + '<div class="opex-card-id">'+task.id+'</div>'
+          + milestoneBadge
+          + '<div class="opex-card-step">'+task.step+'</div>'
+          + (task.driver ? '<div class="opex-card-driver">'+task.driver+'</div>' : '')
+          + (dates ? '<div class="opex-card-dates">&#128197; '+dates+'</div>' : '')
+          + '<div><span class="opex-status-badge '+statusClass+'">'+task.status+'</span></div>'
+          + '</div>'
+          + arrow;
+      }).join('');
+      return '<div class="opex-release-section">'
+        + '<div class="opex-release-header">'+headerLabel+'</div>'
+        + '<div class="opex-pipeline">'+cards+'</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Gantt
+  var ganttEl = document.getElementById('opexGanttContainer');
+  if (ganttEl) {
+    var RS2 = new Date('2026-04-01'), RD2 = 90;
+    function pct2(d) { if(!d) return null; var diff=(new Date(d)-RS2)/864e5; return Math.max(0,Math.min(100,diff/RD2*100)); }
+    function bw2(s,e) { var sp=pct2(s),ep=pct2(e); return sp==null||ep==null?0:Math.max(.8,ep-sp); }
+    var statusColorMap = {'Completed':'linear-gradient(90deg,#059669,#34d399)','In Progress':'linear-gradient(90deg,#d97706,#fbbf24)','Not Started':'linear-gradient(90deg,#6366f1,#818cf8)'};
+    var hdr = document.createElement('div'); hdr.className = 'gantt-header';
+    ['April','May','June'].forEach(function(m){ var d=document.createElement('div'); d.className='gantt-month'; d.textContent=m; hdr.appendChild(d); });
+    ganttEl.appendChild(hdr);
+    var tp2 = pct2(new Date().toISOString().slice(0,10));
+    MS_OPEX_DATA.forEach(function(rel){
+      rel.tasks.forEach(function(task){
+        if (!task.start && !task.end) return;
+        var rd = document.createElement('div'); rd.className = 'gantt-row';
+        var lbl = document.createElement('div'); lbl.className='gantt-label'; lbl.textContent=task.step;
+        var trk = document.createElement('div'); trk.className='gantt-track';
+        var tl = document.createElement('div');
+        tl.style.cssText = 'position:absolute;left:'+tp2+'%;top:-3px;bottom:-3px;width:2px;background:rgba(239,68,68,.45);z-index:1;';
+        trk.appendChild(tl);
+        var bar = document.createElement('div'); bar.className='gantt-bar';
+        var startD = task.start || task.end;
+        bar.style.background = statusColorMap[task.status] || statusColorMap['Not Started'];
+        bar.style.left = pct2(startD)+'%';
+        bar.style.width = (task.start && task.end ? bw2(task.start,task.end) : 1.5)+'%';
+        trk.appendChild(bar);
+        if (task.milestone) { var m=document.createElement('div'); m.className='milestone-marker'; m.style.left=(pct2(task.end)-.8)+'%'; trk.appendChild(m); }
+        rd.appendChild(lbl); rd.appendChild(trk); ganttEl.appendChild(rd);
+      });
+    });
+  }
+}
+
+</script>
+</body>
+</html>
